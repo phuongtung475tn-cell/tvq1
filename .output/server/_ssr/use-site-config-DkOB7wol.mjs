@@ -3,7 +3,7 @@ import { c as createServerFn, i as TSS_SERVER_FUNCTION } from "./createServerFn-
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
 import { a as unknownType, i as stringType, n as objectType, r as recordType } from "../_libs/zod.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-BTNvPCtv.js
+//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-DkOB7wol.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var DEFAULT_CONFIG = {
@@ -1003,9 +1003,23 @@ async function isDuplicateLeadRemote(phone, config) {
 		return false;
 	}
 }
-function clearLeads() {
-	if (!isBrowser()) return;
+async function clearLeads(config) {
+	if (!isBrowser()) return false;
+	if (config?.admin.storageMode === "database") try {
+		return (await fetch(`${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/rpc/clear_funnel_leads`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				apikey: config.admin.supabaseAnonKey,
+				Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`
+			},
+			body: "{}"
+		})).ok;
+	} catch {
+		return false;
+	}
 	window.localStorage.removeItem(LEADS_KEY);
+	return true;
 }
 /**
 * Lưu lead vào kho đang hoạt động. Luôn ghi bản sao ở máy để Mini-CRM hiển thị
@@ -1287,11 +1301,27 @@ function trackConversion(source, variant) {
 	}
 	saveAnalytics(a);
 }
-function clearAnalytics() {
-	if (!isBrowser()) return;
-	if (loadConfig().admin.storageMode === "database") return;
+async function clearAnalytics(config) {
+	if (!isBrowser()) return false;
+	if (config?.admin.storageMode === "database") try {
+		if (!(await fetch(`${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/rpc/reset_funnel_analytics`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				apikey: config.admin.supabaseAnonKey,
+				Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`
+			},
+			body: "{}"
+		})).ok) return false;
+		cloudAnalyticsState = emptyAnalytics();
+		window.dispatchEvent(new CustomEvent(ANALYTICS_UPDATED_EVENT, { detail: emptyAnalytics() }));
+		return true;
+	} catch {
+		return false;
+	}
 	window.localStorage.removeItem(ANALYTICS_KEY);
 	window.dispatchEvent(new CustomEvent(ANALYTICS_UPDATED_EVENT, { detail: emptyAnalytics() }));
+	return true;
 }
 /** Ghi config vào bảng `site_config` (id=1) qua Supabase REST. Best-effort. */
 async function syncConfigToSupabase(config) {

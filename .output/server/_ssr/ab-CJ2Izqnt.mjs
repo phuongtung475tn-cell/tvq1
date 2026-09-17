@@ -1,7 +1,7 @@
 import { c as createServerFn } from "./createServerFn-CIHAFgYl.mjs";
 import { i as stringType, n as objectType, t as enumType } from "../_libs/zod.mjs";
-import { b as relayWebhook, c as createSsrRpc } from "./use-site-config-BTNvPCtv.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/ab-DR0HZC_V.js
+import { b as relayWebhook, c as createSsrRpc } from "./use-site-config-DkOB7wol.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/ab-CJ2Izqnt.js
 /**
 * AUTOMATED EMAIL SEQUENCER (auto-responder).
 * Gửi email cảm ơn ngay sau khi khách đăng ký. Chạy phía server.

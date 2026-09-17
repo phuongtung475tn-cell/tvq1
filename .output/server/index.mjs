@@ -19,142 +19,142 @@ var public_assets_data_default = {
 	"/.htaccess": {
 		"type": "text/plain; charset=utf-8",
 		"etag": "\"b5b-YLBhnsRYR6S6n+WiA1SQLiwt1Zk\"",
-		"mtime": "2026-09-17T09:49:47.960Z",
+		"mtime": "2026-09-17T10:00:49.349Z",
 		"size": 2907,
 		"path": "../public/.htaccess"
 	},
 	"/favicon.ico": {
 		"type": "image/vnd.microsoft.icon",
 		"etag": "\"4f95-3RXc3p2mhEAs1WBwaIvE0Y0uu0Y\"",
-		"mtime": "2026-09-17T09:49:47.961Z",
+		"mtime": "2026-09-17T10:00:49.350Z",
 		"size": 20373,
 		"path": "../public/favicon.ico"
 	},
 	"/robots.txt": {
 		"type": "text/plain; charset=utf-8",
 		"etag": "\"cf-fbizBV6DBuLXHXKKRgkYa6ocbeg\"",
-		"mtime": "2026-09-17T09:49:47.960Z",
+		"mtime": "2026-09-17T10:00:49.349Z",
 		"size": 207,
 		"path": "../public/robots.txt"
 	},
 	"/sitemap.xml": {
 		"type": "application/xml",
 		"etag": "\"e8-t8YzGcsxu6oeUaEzZ8IGksNfWTk\"",
-		"mtime": "2026-09-17T09:49:47.961Z",
+		"mtime": "2026-09-17T10:00:49.350Z",
 		"size": 232,
 		"path": "../public/sitemap.xml"
 	},
-	"/assets/AdminLoginPage-BLXbArZ9.js": {
+	"/assets/AdminLoginPage-Dm5mq2GP.js": {
 		"type": "text/javascript; charset=utf-8",
-		"etag": "\"a95-6zK7hZBf3d0SdFDpwPEcK//oNfs\"",
-		"mtime": "2026-09-17T09:49:47.131Z",
+		"etag": "\"a95-wIs8UsbERDQDIpnp2RE0GZ3j0Ng\"",
+		"mtime": "2026-09-17T10:00:48.399Z",
 		"size": 2709,
-		"path": "../public/assets/AdminLoginPage-BLXbArZ9.js"
+		"path": "../public/assets/AdminLoginPage-Dm5mq2GP.js"
 	},
-	"/assets/ContentSection-cMkzCCya.js": {
+	"/assets/ContentSection-BHtJK13b.js": {
 		"type": "text/javascript; charset=utf-8",
-		"etag": "\"118f-3b0NT+3Qj0G/QygKeQNHp462J4I\"",
-		"mtime": "2026-09-17T09:49:47.131Z",
+		"etag": "\"118f-y4GSveP2ehpI+rugNnPG2BQJM1I\"",
+		"mtime": "2026-09-17T10:00:48.399Z",
 		"size": 4495,
-		"path": "../public/assets/ContentSection-cMkzCCya.js"
+		"path": "../public/assets/ContentSection-BHtJK13b.js"
 	},
-	"/assets/_-D3BFbao3.js": {
+	"/assets/_-BiHe3J5g.js": {
 		"type": "text/javascript; charset=utf-8",
-		"etag": "\"9c4-XMZIzqj103BXbUXM1SbECRxVYrI\"",
-		"mtime": "2026-09-17T09:49:47.131Z",
+		"etag": "\"9c4-UtJZRiC4HggQRtkbXlPn1218n+M\"",
+		"mtime": "2026-09-17T10:00:48.399Z",
 		"size": 2500,
-		"path": "../public/assets/_-D3BFbao3.js"
+		"path": "../public/assets/_-BiHe3J5g.js"
 	},
-	"/assets/admin-B8ERsvLj.js": {
+	"/assets/admin-C5bGuBvg.js": {
 		"type": "text/javascript; charset=utf-8",
-		"etag": "\"1f4-OYliGgKJGnxi0U7QyfCP2WYa8YU\"",
-		"mtime": "2026-09-17T09:49:47.131Z",
+		"etag": "\"1f4-QcMjY/UQWmaltnpNhm5H/aVQ3HQ\"",
+		"mtime": "2026-09-17T10:00:48.399Z",
 		"size": 500,
-		"path": "../public/assets/admin-B8ERsvLj.js"
+		"path": "../public/assets/admin-C5bGuBvg.js"
+	},
+	"/assets/createLucideIcon-CPVM5IMx.js": {
+		"type": "text/javascript; charset=utf-8",
+		"etag": "\"15bda-376US0N7NSMm5NnY9xMgxk7Qa/g\"",
+		"mtime": "2026-09-17T10:00:48.399Z",
+		"size": 89050,
+		"path": "../public/assets/createLucideIcon-CPVM5IMx.js"
 	},
 	"/assets/expert-1-CcX0y7YN.webp": {
 		"type": "image/webp",
 		"etag": "\"4e66-azYlRFr8uhHtsCzRdIAZMfeXlwQ\"",
-		"mtime": "2026-09-17T09:49:47.132Z",
+		"mtime": "2026-09-17T10:00:48.400Z",
 		"size": 20070,
 		"path": "../public/assets/expert-1-CcX0y7YN.webp"
 	},
 	"/assets/expert-2-WVJni1up.webp": {
 		"type": "image/webp",
 		"etag": "\"4c02-i3IyvaGuNuXwPm3g2n9ZLOvusFA\"",
-		"mtime": "2026-09-17T09:49:47.132Z",
+		"mtime": "2026-09-17T10:00:48.400Z",
 		"size": 19458,
 		"path": "../public/assets/expert-2-WVJni1up.webp"
 	},
 	"/assets/expert-3-AK2LvN4J.webp": {
 		"type": "image/webp",
 		"etag": "\"5f4e-Eqe28tVw7G7O0xNJ2HnPbVGgdQU\"",
-		"mtime": "2026-09-17T09:49:47.132Z",
+		"mtime": "2026-09-17T10:00:48.400Z",
 		"size": 24398,
 		"path": "../public/assets/expert-3-AK2LvN4J.webp"
-	},
-	"/assets/gallery-airport-BNYTV757.webp": {
-		"type": "image/webp",
-		"etag": "\"277b0-d4CzNc8Fz6iajVkqSk+l0ObjzMI\"",
-		"mtime": "2026-09-17T09:49:47.132Z",
-		"size": 161712,
-		"path": "../public/assets/gallery-airport-BNYTV757.webp"
 	},
 	"/assets/gallery-campus-Ccbnr8PW.webp": {
 		"type": "image/webp",
 		"etag": "\"264a0-59aOj6L82cQVeJLC2PuaG5RRNb8\"",
-		"mtime": "2026-09-17T09:49:47.132Z",
+		"mtime": "2026-09-17T10:00:48.400Z",
 		"size": 156832,
 		"path": "../public/assets/gallery-campus-Ccbnr8PW.webp"
 	},
 	"/assets/gallery-dorm-room-CN0jv29K.webp": {
 		"type": "image/webp",
 		"etag": "\"e5a4-oXAGlIQ2gEaidziQHCKkxBTtjiw\"",
-		"mtime": "2026-09-17T09:49:47.132Z",
+		"mtime": "2026-09-17T10:00:48.400Z",
 		"size": 58788,
 		"path": "../public/assets/gallery-dorm-room-CN0jv29K.webp"
 	},
 	"/assets/gallery-visa-C2KfDTnt.webp": {
 		"type": "image/webp",
 		"etag": "\"e3a6-FGjPJcD5qml/QDhBn3h6xdWM9Bg\"",
-		"mtime": "2026-09-17T09:49:47.132Z",
+		"mtime": "2026-09-17T10:00:48.401Z",
 		"size": 58278,
 		"path": "../public/assets/gallery-visa-C2KfDTnt.webp"
 	},
 	"/assets/hero-student-RoGGUFG7.webp": {
 		"type": "image/webp",
 		"etag": "\"22fc8-bnPWmJ5brukLYufWfSzNFGmqb7k\"",
-		"mtime": "2026-09-17T09:49:47.132Z",
+		"mtime": "2026-09-17T10:00:48.401Z",
 		"size": 143304,
 		"path": "../public/assets/hero-student-RoGGUFG7.webp"
 	},
-	"/assets/index-CT6qRY5D.js": {
+	"/assets/index-ChinaPh9.js": {
 		"type": "text/javascript; charset=utf-8",
-		"etag": "\"7285e-i+7Eqw0J5m1eUaxucLlBcE4NQPQ\"",
-		"mtime": "2026-09-17T09:49:47.131Z",
-		"size": 469086,
-		"path": "../public/assets/index-CT6qRY5D.js"
+		"etag": "\"72af6-l1WBXajCfWybUvArzdOZHZaWWfI\"",
+		"mtime": "2026-09-17T10:00:48.398Z",
+		"size": 469750,
+		"path": "../public/assets/index-ChinaPh9.js"
 	},
-	"/assets/routes-CkzTw0Ru.js": {
+	"/assets/routes-C6u8Q0Zp.js": {
 		"type": "text/javascript; charset=utf-8",
-		"etag": "\"2b4ec-4fRGaX2cXBTXFDSVcOXLbmJaG2I\"",
-		"mtime": "2026-09-17T09:49:47.132Z",
+		"etag": "\"2b4ec-39UJnTlIpjOOHdpSw49tk97xNUU\"",
+		"mtime": "2026-09-17T10:00:48.399Z",
 		"size": 177388,
-		"path": "../public/assets/routes-CkzTw0Ru.js"
+		"path": "../public/assets/routes-C6u8Q0Zp.js"
 	},
 	"/assets/styles-DJJCq8As.css": {
 		"type": "text/css; charset=utf-8",
 		"etag": "\"18fec-RJ3y4xsZaCJEuRnKy/pFF1VcqIs\"",
-		"mtime": "2026-09-17T09:49:47.133Z",
+		"mtime": "2026-09-17T10:00:48.401Z",
 		"size": 102380,
 		"path": "../public/assets/styles-DJJCq8As.css"
 	},
-	"/assets/createLucideIcon-DfB4DsRn.js": {
-		"type": "text/javascript; charset=utf-8",
-		"etag": "\"15912-hyxtrU8PZP7rqeDba/6L8DkTCoM\"",
-		"mtime": "2026-09-17T09:49:47.131Z",
-		"size": 88338,
-		"path": "../public/assets/createLucideIcon-DfB4DsRn.js"
+	"/assets/gallery-airport-BNYTV757.webp": {
+		"type": "image/webp",
+		"etag": "\"277b0-d4CzNc8Fz6iajVkqSk+l0ObjzMI\"",
+		"mtime": "2026-09-17T10:00:48.400Z",
+		"size": 161712,
+		"path": "../public/assets/gallery-airport-BNYTV757.webp"
 	}
 };
 //#endregion

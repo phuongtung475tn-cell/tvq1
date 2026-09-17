@@ -2,15 +2,15 @@ import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-Cdal7T4f.
 import { g as Link } from "../_libs/@tanstack/react-router+[...].mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { D as useSiteConfig, S as saveLead, T as trackConversion, m as isDuplicateLeadRemote, p as isDuplicateLead, r as LEAD_CREATED_EVENT, v as loadLeads } from "./use-site-config-BTNvPCtv.mjs";
+import { D as useSiteConfig, S as saveLead, T as trackConversion, m as isDuplicateLeadRemote, p as isDuplicateLead, r as LEAD_CREATED_EVENT, v as loadLeads } from "./use-site-config-DkOB7wol.mjs";
 import { E as GraduationCap, L as CalendarDays, P as Clock, g as MousePointerClick, n as Users, p as Phone, t as X, v as MessageCircle, y as Menu } from "../_libs/lucide-react.mjs";
-import { n as ScarcityBar, t as ContentSection } from "./ContentSection-C0JFC03U.mjs";
+import { n as ScarcityBar, t as ContentSection } from "./ContentSection-CEaELQit.mjs";
 import { a as DialogOverlay, c as DialogTrigger, i as DialogDescription, n as DialogClose, o as DialogPortal, r as DialogContent, s as DialogTitle, t as Dialog } from "../_libs/@radix-ui/react-dialog+[...].mjs";
-import { a as getUtm, f as trackFormStart, h as utmSource, l as sendLeadEmail, m as trackLead, o as getUtmPayload, r as dispatchLead, s as getVariant } from "./ab-DR0HZC_V.mjs";
+import { a as getUtm, f as trackFormStart, h as utmSource, l as sendLeadEmail, m as trackLead, o as getUtmPayload, r as dispatchLead, s as getVariant } from "./ab-CJ2Izqnt.mjs";
 import { n as toast, t as Toaster } from "../_libs/sonner.mjs";
 import { n as clsx, t as cva } from "../_libs/class-variance-authority+clsx.mjs";
 import { t as twMerge } from "../_libs/tailwind-merge.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-CjZ2f9St.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-DsGsPe0y.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var expert_1_default = "/assets/expert-1-CcX0y7YN.webp";

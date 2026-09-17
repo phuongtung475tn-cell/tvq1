@@ -1,8 +1,8 @@
 import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-Cdal7T4f.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { D as useSiteConfig, r as LEAD_CREATED_EVENT } from "./use-site-config-BTNvPCtv.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/ContentSection-C0JFC03U.js
+import { D as useSiteConfig, r as LEAD_CREATED_EVENT } from "./use-site-config-DkOB7wol.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/ContentSection-CEaELQit.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function endOfMonth() {

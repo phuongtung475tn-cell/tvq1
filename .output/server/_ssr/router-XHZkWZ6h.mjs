@@ -2,13 +2,13 @@ import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-Cdal7T4f.
 import { c as HeadContent, d as createRouter, f as Outlet, g as Link, h as createRootRouteWithContext, l as useRouterState, m as createFileRoute, p as lazyRouteComponent, s as Scripts, v as useRouter } from "../_libs/@tanstack/react-router+[...].mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { D as useSiteConfig, E as trackVisit, S as saveLead, _ as loadCloudLeads, a as clearAnalytics, d as exportSupabaseSql, g as loadCloudAnalytics, h as loadAnalytics, i as SiteConfigProvider, l as exportConfigFile, n as DEFAULT_CONFIG, o as clearLeads, r as LEAD_CREATED_EVENT, t as ANALYTICS_UPDATED_EVENT, u as exportLeadsCsv, v as loadLeads, w as testSupabaseConnection, x as saveConfigWithCredentials, y as migrateLocalDataToSupabase } from "./use-site-config-BTNvPCtv.mjs";
-import { n as useAdmin, t as AdminProvider } from "./use-admin-52-_iFoV.mjs";
+import { D as useSiteConfig, E as trackVisit, S as saveLead, _ as loadCloudLeads, a as clearAnalytics, d as exportSupabaseSql, g as loadCloudAnalytics, h as loadAnalytics, i as SiteConfigProvider, l as exportConfigFile, n as DEFAULT_CONFIG, o as clearLeads, r as LEAD_CREATED_EVENT, t as ANALYTICS_UPDATED_EVENT, u as exportLeadsCsv, v as loadLeads, w as testSupabaseConnection, x as saveConfigWithCredentials, y as migrateLocalDataToSupabase } from "./use-site-config-DkOB7wol.mjs";
+import { n as useAdmin, t as AdminProvider } from "./use-admin-Bk4yHv29.mjs";
 import { A as EyeOff, D as Globe, E as GraduationCap, F as ClipboardList, I as ChartColumn, M as Database, N as CloudUpload, O as FileText, P as Clock, R as BookOpen, S as LogOut, T as KeyRound, _ as Monitor, a as Tablet, b as Megaphone, c as Smartphone, d as Save, f as Plus, h as Palette, i as Target, j as Download, k as Eye, l as Settings2, m as Pencil, o as SquareSplitHorizontal, p as Phone, r as Trash2, s as Sparkles, t as X, u as Search, w as Link2, x as Mail, z as Bell } from "../_libs/lucide-react.mjs";
-import { c as resetVariant, d as testWebhookEndpoint, g as webhookConfigurationWarning, h as utmSource, i as fireTestEvent, n as checkEmailConfig, o as getUtmPayload, p as trackInteraction, s as getVariant, t as captureUtm, u as sendTestEmail } from "./ab-DR0HZC_V.mjs";
+import { c as resetVariant, d as testWebhookEndpoint, g as webhookConfigurationWarning, h as utmSource, i as fireTestEvent, n as checkEmailConfig, o as getUtmPayload, p as trackInteraction, s as getVariant, t as captureUtm, u as sendTestEmail } from "./ab-CJ2Izqnt.mjs";
 import { t as QueryClientProvider } from "../_libs/tanstack__react-query.mjs";
 import { t as QueryClient } from "../_libs/tanstack__query-core.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-3g45QYSa.js
+//#region node_modules/.nitro/vite/services/ssr/assets/router-XHZkWZ6h.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var styles_default = "/assets/styles-DJJCq8As.css";
@@ -1676,6 +1676,7 @@ function WebhookModal({ onClose }) {
 function AnalyticsModal({ onClose }) {
 	const { config } = useSiteConfig();
 	const [a, setA] = (0, import_react.useState)(null);
+	const [actionMessage, setActionMessage] = (0, import_react.useState)(null);
 	(0, import_react.useEffect)(() => {
 		const refresh = () => setA(loadAnalytics());
 		refresh();
@@ -1691,16 +1692,19 @@ function AnalyticsModal({ onClose }) {
 		subtitle: config.admin.storageMode === "database" ? "Số liệu Analytics từ Supabase" : "Số liệu thời gian thực (local)",
 		onClose,
 		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "mb-3 flex justify-end",
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 					type: "button",
-					onClick: () => {
-						if (window.confirm("Xóa toàn bộ số liệu Analytics trên thiết bị này?")) clearAnalytics();
+					onClick: async () => {
+						if (window.confirm(config.admin.storageMode === "database" ? "Xóa toàn bộ số liệu Analytics trên Supabase?" : "Xóa toàn bộ số liệu Analytics trên thiết bị này?")) setActionMessage(await clearAnalytics(config) ? "Đã reset analytics trên Supabase." : "Không thể reset analytics. Kiểm tra quyền Supabase.");
 					},
 					className: "rounded-lg border border-red-200 px-3 py-1.5 text-[11px] font-bold text-red-600",
 					children: "Xóa số liệu test"
-				})
+				}), actionMessage && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mb-2 text-center text-[11px] font-semibold text-sky-700",
+					children: actionMessage
+				})]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "grid grid-cols-3 gap-2",
@@ -1782,6 +1786,7 @@ function LeadsModal({ onClose }) {
 	const { config } = useSiteConfig();
 	const [leads, setLeads] = (0, import_react.useState)([]);
 	const [q, setQ] = (0, import_react.useState)("");
+	const [actionMessage, setActionMessage] = (0, import_react.useState)(null);
 	(0, import_react.useEffect)(() => {
 		const refresh = () => {
 			if (config.admin.storageMode === "database") loadCloudLeads(config).then(setLeads);
@@ -1844,10 +1849,11 @@ function LeadsModal({ onClose }) {
 						children: "+ Lead thử"
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						onClick: () => {
-							if (window.confirm("Xoá toàn bộ lead đã lưu trên máy này?")) {
-								clearLeads();
-								setLeads([]);
+						onClick: async () => {
+							if (window.confirm(config.admin.storageMode === "database" ? "Xóa toàn bộ lead trên Supabase?" : "Xoá toàn bộ lead đã lưu trên máy này?")) {
+								const cleared = await clearLeads(config);
+								setActionMessage(cleared ? "Đã xóa dữ liệu lead trên Supabase." : "Không thể xóa lead. Kiểm tra quyền Supabase.");
+								if (cleared) setLeads([]);
 							}
 						},
 						disabled: leads.length === 0,
@@ -1855,6 +1861,10 @@ function LeadsModal({ onClose }) {
 						children: "Xoá tất cả"
 					})
 				]
+			}),
+			actionMessage && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mb-2 text-center text-[11px] font-semibold text-sky-700",
+				children: actionMessage
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
 				value: q,
@@ -4117,7 +4127,7 @@ function SaveHint() {
 		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 			onClick: async () => {
 				const saved = await save();
-				setMessage(saved ? "Đã lưu lên Supabase." : "Chưa lưu được. Hãy nhập email/mật khẩu Supabase Auth và lưu trong nhóm Storage.");
+				setMessage(saved ? "Đã lưu lên Supabase." : "Chưa lưu được. Kiểm tra phiên đăng nhập Supabase và quyền admin_users trong Storage.");
 			},
 			className: `w-full rounded-lg py-2.5 text-sm font-bold ${dirty ? "bg-emerald-500 text-white" : "bg-neutral-200 text-neutral-500 dark:bg-white/10"}`,
 			children: dirty ? "LƯU THAY ĐỔI" : "Đã lưu"
@@ -4475,7 +4485,7 @@ function RootComponent() {
 		] }) })
 	});
 }
-var $$splitComponentImporter$2 = () => import("./routes-CjZ2f9St.mjs");
+var $$splitComponentImporter$2 = () => import("./routes-DsGsPe0y.mjs");
 var TITLE = "Du Học Nghề Trung Quốc 0Đ | Vừa Học Vừa Làm Lương 15-30 Triệu";
 var DESC = "Du học nghề Trung Quốc học phí 0Đ: học 20% lý thuyết - 80% thực hành, lương cứng 15-30 triệu/tháng, bằng Cao đẳng chính quy quốc tế. Đăng ký nhận lộ trình miễn phí.";
 var FAQ_JSONLD = JSON.stringify({
@@ -4553,9 +4563,9 @@ var Route$2 = createFileRoute("/")({
 	}),
 	component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-var $$splitComponentImporter$1 = () => import("../_-B7DeE_79.mjs");
+var $$splitComponentImporter$1 = () => import("../_-B2TRR7H9.mjs");
 var Route$1 = createFileRoute("/$")({ component: lazyRouteComponent($$splitComponentImporter$1, "component") });
-var $$splitComponentImporter = () => import("./admin-ipVzuflJ.mjs");
+var $$splitComponentImporter = () => import("./admin-B0avHDaC.mjs");
 var Route = createFileRoute("/admin")({ component: lazyRouteComponent($$splitComponentImporter, "component") });
 var rootRouteChildren = {
 	IndexRoute: Route$2.update({
