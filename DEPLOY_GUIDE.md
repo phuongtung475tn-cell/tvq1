@@ -55,6 +55,24 @@ Sau khi thay đổi biến môi trường, cần redeploy để Vite đưa cấu
 
 Ưu điểm: Server Function `sendLeadEmail` chạy được, không lộ API key ra trình duyệt.
 
+### A1. Bảng biến môi trường
+
+| Biến | Nơi đặt | Bắt buộc | Ghi chú |
+|---|---|---:|---|
+| `VITE_SUPABASE_URL` | Vercel Production/Preview | Có | Project URL, ví dụ `https://project-ref.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | Vercel Production/Preview | Có | Publishable/anon key, được phép xuất hiện trong frontend nhưng vẫn cần RLS |
+| `VITE_SUPABASE_ADMIN_EMAIL` | Vercel Production/Preview | Có | Email user đã có trong `admin_users` |
+| `SUPABASE_URL` | Vercel server-only | Chỉ backup | Không có tiền tố `VITE_` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Vercel server-only | Chỉ backup | Tuyệt đối không đưa vào browser/Git |
+| `RESEND_API_KEY` | Vercel server-only | Tùy chọn | Dùng email server |
+| `BACKUP_FROM_EMAIL` | Vercel server-only | Tùy chọn | Domain/email đã xác minh trên Resend |
+| `BACKUP_CRON_TOKEN` | Vercel server-only | Tùy chọn | Token ngẫu nhiên, không lưu trong config cloud |
+
+Sau khi thêm hoặc đổi bất kỳ biến nào, chọn **Redeploy**. Vite chỉ inject biến
+`VITE_*` trong lúc build; reload trang không đủ để nhận giá trị mới.
+
+Không dùng `SUPABASE_SERVICE_ROLE_KEY` làm `VITE_SUPABASE_ANON_KEY`.
+
 ---
 
 ## B. Deploy bản tĩnh lên cPanel / DirectAdmin / VPS Nginx
@@ -121,6 +139,30 @@ select count(*) from public.leads;
 
 Nếu đăng nhập thành công nhưng danh sách lead trống hoặc báo 401/403, kiểm tra policy `admins can read leads` và xem Network request tới `/rest/v1/leads` có `Authorization: Bearer <access_token>`.
 
+### C1. Kiểm tra schema sau khi chạy SQL
+
+```sql
+select user_id, email, role, enabled
+from public.admin_users;
+
+select id, updated_at from public.funnel_configs where id = 1;
+select id, updated_at from public.funnel_analytics where id = 1;
+
+select public.is_funnel_admin();
+
+select proname
+from pg_proc
+where proname in (
+   'is_funnel_admin',
+   'upsert_funnel_analytics',
+   'reset_funnel_analytics',
+   'clear_funnel_leads'
+);
+```
+
+Với project đã chạy schema cũ, chạy `supabase/admin_rls_patch.sql`. File này
+idempotent và tạo các RPC bảo vệ thao tác analytics/lead của Admin.
+
 ---
 
 ## D. Cloud Cron-job (sao lưu định kỳ)
@@ -146,9 +188,56 @@ curl -i "https://tqv10.vercel.app/api/backup?token=$BACKUP_CRON_TOKEN"
 
 Phải nhận HTTP `200 Backup sent`. Nếu nhận `503`, kiểm tra đủ biến môi trường; nếu `401`, kiểm tra token hoặc gọi từ Vercel Cron.
 
+## E. Domain và SSL
+
+### E1. Gắn domain trên Vercel
+
+1. Vào **Vercel → Project → Settings → Domains → Add**.
+2. Nhập domain chính, ví dụ `www.example.com` hoặc `example.com`.
+3. Tại nhà cung cấp DNS, tạo đúng bản ghi Vercel hiển thị trong màn hình Domain.
+    Thông thường:
+    - Domain gốc: `A @ 76.76.21.21`.
+    - Subdomain: `CNAME www cname.vercel-dns.com`.
+4. Xóa bản ghi A/CNAME cũ trỏ sang hosting khác nếu gây conflict.
+5. Chờ DNS propagation và xem trạng thái **Valid Configuration** trên Vercel.
+
+Không tự cài certificate trên Vercel. Vercel tự cấp và gia hạn SSL sau khi DNS
+đúng. Không dùng domain có certificate lỗi hoặc mixed-content asset.
+
+### E2. Kiểm tra domain/SSL
+
+```bash
+curl -I http://example.com/admin
+curl -I https://example.com/admin
+openssl s_client -connect example.com:443 -servername example.com \\
+   </dev/null 2>/dev/null | openssl x509 -noout -subject -issuer -dates
+```
+
+Kết quả mong muốn: HTTP chuyển `308` sang HTTPS, HTTPS trả `200`, certificate
+có SAN chứa domain thật, và ngày hết hạn còn hiệu lực.
+
+## F. Phát hành source package
+
+Gói source không được chứa `.env`, `node_modules`, `.output`, test traces hoặc
+secret. Tạo gói sạch từ root repository:
+
+```bash
+tar --exclude=node_modules \\
+      --exclude=.output \\
+      --exclude=test-results \\
+      --exclude=.env \\
+      --exclude='*.zip' \\
+      -czf tvq1-source-release.tar.gz .
+```
+
+Người nhận giải nén gói, chạy `npm install`, copy `.env.example` thành `.env`,
+điền biến môi trường riêng, chạy SQL trong mục C rồi `npm run build`.
+
+Không gửi file `.env` qua GitHub, email công khai hoặc trong archive source.
+
 ---
 
-## E. Checklist sau khi deploy
+## G. Checklist phát hành doanh nghiệp
 
 - [ ] Trang chủ mở được qua HTTPS.
 - [ ] Mở đúng `https://tvq1.vercel.app`, không dùng `http://`; HTTP phải tự chuyển 308 sang HTTPS.
@@ -161,6 +250,10 @@ Phải nhận HTTP `200 Backup sent`. Nếu nhận `503`, kiểm tra đủ biế
 - [ ] Pixel Facebook/TikTok/GA4 bắn sự kiện `PageView` và `Lead`.
 - [ ] Đổi mật khẩu & đường dẫn Admin (mục **🔑 Đổi Link Admin**) khỏi giá trị mặc định.
 - [ ] Cập nhật `public/sitemap.xml` và `public/robots.txt` theo domain thật.
+- [ ] Domain Vercel hiển thị `Valid Configuration`.
+- [ ] HTTP redirect sang HTTPS và certificate có SAN đúng domain.
+- [ ] Không còn secret thật trong source package.
+- [ ] Đã kiểm tra rollback về deployment trước trên Vercel.
 
 ### Kiểm tra tự động
 
