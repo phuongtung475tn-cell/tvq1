@@ -43,6 +43,7 @@ cp .env.example .env
 2. Vào Vercel → **New Project** → chọn repo → framework tự nhận **TanStack Start**.
 3. Thêm biến môi trường (Project → Settings → Environment Variables):
    - `RESEND_API_KEY` — nếu bật Auto Email.
+   - `RESEND_FROM_EMAIL` — địa chỉ From thuộc domain đã xác minh trên Resend.
    - `VITE_SUPABASE_URL` — URL public của project Supabase.
    - `VITE_SUPABASE_ANON_KEY` — publishable/anon key, không dùng service role key.
    - `VITE_SUPABASE_ADMIN_EMAIL` — email của user quản trị đã tạo trong Supabase Auth.
@@ -65,6 +66,7 @@ Sau khi thay đổi biến môi trường, cần redeploy để Vite đưa cấu
 | `SUPABASE_URL` | Vercel server-only | Chỉ backup | Không có tiền tố `VITE_` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Vercel server-only | Chỉ backup | Tuyệt đối không đưa vào browser/Git |
 | `RESEND_API_KEY` | Vercel server-only | Tùy chọn | Dùng email server |
+| `RESEND_FROM_EMAIL` | Vercel server-only | Tùy chọn | From đã xác minh trên Resend; dùng cho auto email nếu Admin không nhập From |
 | `BACKUP_FROM_EMAIL` | Vercel server-only | Tùy chọn | Domain/email đã xác minh trên Resend |
 | `BACKUP_CRON_TOKEN` | Vercel server-only | Tùy chọn | Token ngẫu nhiên, không lưu trong config cloud |
 

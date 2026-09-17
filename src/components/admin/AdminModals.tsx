@@ -902,6 +902,7 @@ function EmailModal({ onClose }: ModalProps) {
   const [testMessage, setTestMessage] = useState("");
   const [testTo, setTestTo] = useState("");
   const validFrom = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.fromEmail);
+  const canUseServerFrom = e.provider === "resend" && !e.fromEmail.trim();
   return (
     <AdminModal
       title="Tự Động Hóa Email"
@@ -941,7 +942,11 @@ function EmailModal({ onClose }: ModalProps) {
       <p
         className={`mb-3 text-xs ${validFrom ? "text-emerald-600" : "text-amber-600"}`}
       >
-        {validFrom ? "Địa chỉ From hợp lệ." : "Cần nhập email From hợp lệ."}
+        {validFrom
+          ? "Địa chỉ From hợp lệ."
+          : canUseServerFrom
+            ? "Sẽ dùng RESEND_FROM_EMAIL hoặc BACKUP_FROM_EMAIL trên server."
+            : "Cần nhập email From hợp lệ."}
       </p>
       {e.provider === "resend" ? (
         <Field
@@ -1080,7 +1085,7 @@ function EmailModal({ onClose }: ModalProps) {
       <button
         type="button"
         disabled={
-          !validFrom ||
+          (!validFrom && !canUseServerFrom) ||
           !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testTo) ||
           testState === "testing"
         }
@@ -1091,12 +1096,12 @@ function EmailModal({ onClose }: ModalProps) {
               const configured =
                 e.provider === "gmail"
                   ? result.gmailConfigured
-                  : result.resendConfigured;
+                  : result.resendConfigured || Boolean(e.resendApiKey.trim());
               if (!configured)
                 throw new Error(
                   e.provider === "gmail"
                     ? "Thiếu GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET hoặc GMAIL_REFRESH_TOKEN."
-                    : "Thiếu RESEND_API_KEY.",
+                    : "Thiếu RESEND_API_KEY. Hãy đặt key trên server hoặc nhập key trong ô Resend API Key.",
                 );
               return sendTestEmail({
                 data: {

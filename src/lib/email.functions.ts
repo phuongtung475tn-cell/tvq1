@@ -9,7 +9,7 @@ import { z } from "zod";
 const schema = z.object({
   provider: z.enum(["resend", "gmail"]).default("resend"),
   to: z.string().email(),
-  from: z.string().email(),
+  from: z.string().email().optional().default(""),
   subject: z.string().min(1),
   text: z.string().min(1),
   html: z.string().optional(),
@@ -22,6 +22,9 @@ const schema = z.object({
 export const checkEmailConfig = createServerFn({ method: "GET" }).handler(
   () => ({
     resendConfigured: Boolean(process.env["RESEND_API_KEY"]),
+    resendFromConfigured: Boolean(
+      process.env["RESEND_FROM_EMAIL"] || process.env["BACKUP_FROM_EMAIL"],
+    ),
     gmailConfigured: Boolean(
       process.env["GMAIL_CLIENT_ID"] &&
       process.env["GMAIL_CLIENT_SECRET"] &&
@@ -89,31 +92,44 @@ export const sendLeadEmail = createServerFn({ method: "POST" })
     if (data.provider === "gmail") return sendWithGmail(data);
     const apiKey = data.resendApiKey || process.env["RESEND_API_KEY"];
     if (!apiKey) return { sent: false, reason: "missing_api_key" as const };
+    const from =
+      data.from ||
+      process.env["RESEND_FROM_EMAIL"] ||
+      process.env["BACKUP_FROM_EMAIL"] ||
+      "";
+    if (!from) return { sent: false, reason: "missing_from_email" as const };
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        from: data.from,
-        to: [data.to],
-        subject: data.subject,
-        text: data.text,
-        ...(data.html ? { html: data.html } : {}),
-      }),
-    });
-    if (!res.ok) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          from,
+          to: [data.to],
+          subject: data.subject,
+          text: data.text,
+          ...(data.html ? { html: data.html } : {}),
+        }),
+      });
+      if (res.ok) return { sent: true as const };
       const detail = await res.text();
-      console.error(`Resend failed [${res.status}]: ${detail}`);
-      return {
-        sent: false,
-        reason: "provider_error" as const,
-        status: res.status,
-      };
+      console.error(
+        `Resend failed [${res.status}] attempt ${attempt + 1}: ${detail}`,
+      );
+      if (res.status < 500 && res.status !== 429) {
+        return {
+          sent: false,
+          reason: "provider_error" as const,
+          status: res.status,
+        };
+      }
+      if (attempt < 2)
+        await new Promise((resolve) => setTimeout(resolve, 400 * 2 ** attempt));
     }
-    return { sent: true as const };
+    return { sent: false, reason: "provider_error" as const, status: 503 };
   });
 
 export const sendTestEmail = createServerFn({ method: "POST" })
