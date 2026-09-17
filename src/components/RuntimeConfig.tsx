@@ -6,6 +6,8 @@ import { captureUtm } from "@/lib/utm-hub";
 import { trackVisit } from "@/services/dataAdapter";
 import { trackInteraction } from "@/lib/tracking";
 
+const visitCounted = new Set<string>();
+
 /** Chèn một thẻ <script> nội tuyến một lần duy nhất. */
 function injectInline(
   id: string,
@@ -289,18 +291,10 @@ export function RuntimeConfig() {
   // Analytics: ghi nhận 1 lượt truy cập/phiên + gán biến thể A/B
   useEffect(() => {
     const experimentKey = `funnel_visit_counted_v2_${config.abTest.enabled ? "ab" : "plain"}_${config.abTest.split}`;
-    try {
-      if (sessionStorage.getItem(experimentKey) === "1") return;
-    } catch {
-      /* ignore */
-    }
+    if (visitCounted.has(experimentKey)) return;
     const variant = getVariant(config.abTest.enabled, config.abTest.split);
     trackVisit(utmSource(), config.abTest.enabled ? variant : undefined);
-    try {
-      sessionStorage.setItem(experimentKey, "1");
-    } catch {
-      /* ignore */
-    }
+    visitCounted.add(experimentKey);
   }, [config.abTest.enabled, config.abTest.split]);
 
   return null;

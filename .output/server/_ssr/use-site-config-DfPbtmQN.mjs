@@ -1,9 +1,9 @@
-import { r as __toESM, t as getServerFnById } from "../__23tanstack-start-server-fn-resolver-hZzAbtud.mjs";
+import { r as __toESM, t as getServerFnById } from "../__23tanstack-start-server-fn-resolver-SwdlihR5.mjs";
 import { c as createServerFn, i as TSS_SERVER_FUNCTION } from "./createServerFn-CIHAFgYl.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
 import { a as unknownType, i as stringType, n as objectType, r as recordType } from "../_libs/zod.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-CCuN-Fru.js
+//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-DfPbtmQN.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var DEFAULT_CONFIG = {
@@ -588,6 +588,14 @@ async function signInWithSupabase(url, anonKey, email, password) {
 		return false;
 	}
 }
+var saveSchema = objectType({
+	url: stringType().url(),
+	anonKey: stringType().min(1),
+	email: stringType().email(),
+	password: stringType().min(1),
+	config: recordType(stringType(), unknownType())
+});
+var saveConfigWithSupabaseAuth = createServerFn({ method: "POST" }).validator((input) => saveSchema.parse(input)).handler(createSsrRpc("59299230b1dcbdf2a6bf7bd85cf72e0921cd318d99fd9be43df2d046cebba28a"));
 /**
 * HYBRID STORAGE ADAPTER
 * ----------------------
@@ -736,18 +744,43 @@ async function loadCloudConfig(config) {
 		return null;
 	}
 }
-function saveConfig(config) {
-	if (!isBrowser()) return;
+async function saveConfig(config) {
+	if (!isBrowser()) return false;
 	if (config.admin.storageMode !== "database") {
 		clearClientCache();
 		console.error("Local storage mode is disabled; configure Supabase first.");
-		return;
+		return false;
 	}
 	if (config.admin.storageMode === "database") {
 		clearClientCache();
-		if (config.admin.supabaseUrl && config.admin.supabaseAnonKey) syncConfigToSupabase(config);
+		if (config.admin.supabaseUrl && config.admin.supabaseAnonKey) return await syncConfigToSupabase(config);
 		else console.error("Database mode requires VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
-		return;
+		return false;
+	}
+	return false;
+}
+async function saveConfigWithCredentials(config, password) {
+	if (!isBrowser() || !config.admin.supabaseUrl || !config.admin.supabaseAnonKey) return {
+		ok: false,
+		reason: "missing_config"
+	};
+	try {
+		const result = await saveConfigWithSupabaseAuth({ data: {
+			url: config.admin.supabaseUrl,
+			anonKey: config.admin.supabaseAnonKey,
+			email: config.admin.supabaseAdminEmail,
+			password,
+			config
+		} });
+		if (result.ok) try {
+			window.sessionStorage.setItem("funnel_supabase_access_token_v1", result.accessToken);
+		} catch {}
+		return result;
+	} catch {
+		return {
+			ok: false,
+			reason: "server_unavailable"
+		};
 	}
 }
 function resetConfig() {
@@ -772,6 +805,7 @@ function exportSupabaseSql(config) {
 	if (!isBrowser()) return;
 	const cloudConfig = structuredClone(config);
 	cloudConfig.admin.supabaseAnonKey = "";
+	cloudConfig.admin.password = "";
 	cloudConfig.admin.backupCronToken = "";
 	cloudConfig.emailAutomation.resendApiKey = "";
 	cloudConfig.emailAutomation.gmailClientId = "";
@@ -787,18 +821,18 @@ alter table public.funnel_configs enable row level security;
 drop policy if exists "funnel configs can be read" on public.funnel_configs;
 create policy "funnel configs can be read" on public.funnel_configs for select using (true);
 drop policy if exists "funnel configs can be written" on public.funnel_configs;
-create policy "funnel configs can be written" on public.funnel_configs for insert with check (id = 1);
+create policy "funnel configs can be written" on public.funnel_configs for insert to authenticated with check (id = 1);
 drop policy if exists "funnel configs can be updated" on public.funnel_configs;
-create policy "funnel configs can be updated" on public.funnel_configs for update using (id = 1) with check (id = 1);
+create policy "funnel configs can be updated" on public.funnel_configs for update to authenticated using (id = 1) with check (id = 1);
 
 create table if not exists public.funnel_analytics (id bigint primary key, data jsonb not null, updated_at timestamptz not null default now());
 alter table public.funnel_analytics enable row level security;
 drop policy if exists "funnel analytics can be read" on public.funnel_analytics;
-create policy "funnel analytics can be read" on public.funnel_analytics for select using (true);
+create policy "funnel analytics can be read" on public.funnel_analytics for select to authenticated;
 drop policy if exists "funnel analytics can be written" on public.funnel_analytics;
-create policy "funnel analytics can be written" on public.funnel_analytics for insert with check (id = 1);
+create policy "funnel analytics can be written" on public.funnel_analytics for insert to authenticated with check (id = 1);
 drop policy if exists "funnel analytics can be updated" on public.funnel_analytics;
-create policy "funnel analytics can be updated" on public.funnel_analytics for update using (id = 1) with check (id = 1);
+create policy "funnel analytics can be updated" on public.funnel_analytics for update to authenticated using (id = 1) with check (id = 1);
 
 create table if not exists public.leads (id uuid primary key default gen_random_uuid(), created_at timestamptz not null default now(), name text, phone text, email text, city text, major text, ai_score int, ai_rank text, risk_level text, risk_reasons text[], recommended_action text, behavior_summary text, sale_advice text, device_tech_info text, traffic_ads_source text, network_provider text, network_label text, current_session int, visits_today int, visits_month int, utm_source text, utm_medium text, utm_campaign text, utm_content text, utm_term text, fbclid text, ttclid text, gclid text, raw_query text, referrer text, attribution_model text, attribution_detected_by text, utm_params jsonb, variant text, landing_url text, device_manufacturer text, device_family text, device_model text, operating_system text, browser text, visitor_behavior_payload jsonb);
 alter table public.leads enable row level security;
@@ -810,7 +844,7 @@ alter table public.visitor_sessions enable row level security;
 drop policy if exists "visitor sessions can be created by public form" on public.visitor_sessions;
 create policy "visitor sessions can be created by public form" on public.visitor_sessions for insert with check (true);
 drop policy if exists "visitor sessions can be counted by public form" on public.visitor_sessions;
-create policy "visitor sessions can be counted by public form" on public.visitor_sessions for select using (true);
+create policy "visitor sessions can be counted by public form" on public.visitor_sessions for select to authenticated;
 
 insert into public.funnel_configs (id, data, updated_at) values (1, ${sqlJson(cloudConfig)}, now()) on conflict (id) do update set data = excluded.data, updated_at = excluded.updated_at;
 insert into public.funnel_analytics (id, data, updated_at) values (1, ${sqlJson(analytics)}, now()) on conflict (id) do update set data = excluded.data, updated_at = excluded.updated_at;
@@ -1255,8 +1289,10 @@ async function syncConfigToSupabase(config) {
 			signal: controller.signal
 		});
 		if (!response.ok) console.warn(`Supabase config sync failed [${response.status}]`);
+		return response.ok;
 	} catch (err) {
 		console.warn("Supabase config sync failed:", err.message);
+		return false;
 	} finally {
 		window.clearTimeout(timer);
 	}
@@ -1381,13 +1417,11 @@ function SiteConfigProvider({ children }) {
 		});
 		setDirty(true);
 	}, []);
-	const save = (0, import_react.useCallback)(() => {
-		setConfig((current) => {
-			saveConfig(current);
-			return current;
-		});
-		setDirty(false);
-	}, []);
+	const save = (0, import_react.useCallback)(async () => {
+		const saved = await saveConfig(config);
+		if (saved) setDirty(false);
+		return saved;
+	}, [config]);
 	const reset = (0, import_react.useCallback)(() => {
 		setConfig(resetConfig());
 		setDirty(false);
@@ -1445,4 +1479,4 @@ function useSiteConfig() {
 	return ctx;
 }
 //#endregion
-export { testSupabaseConnection as C, useSiteConfig as E, signInWithSupabase as S, trackVisit as T, loadCloudLeads as _, clearAnalytics as a, relayWebhook as b, createSsrRpc as c, exportSupabaseSql as d, getSupabaseAccessToken as f, loadCloudAnalytics as g, loadAnalytics as h, SiteConfigProvider as i, exportConfigFile as l, isDuplicateLeadRemote as m, DEFAULT_CONFIG as n, clearLeads as o, isDuplicateLead as p, LEAD_CREATED_EVENT as r, clearSupabaseAccessToken as s, ANALYTICS_UPDATED_EVENT as t, exportLeadsCsv as u, loadLeads as v, trackConversion as w, saveLead as x, migrateLocalDataToSupabase as y };
+export { signInWithSupabase as C, useSiteConfig as D, trackVisit as E, saveLead as S, trackConversion as T, loadCloudLeads as _, clearAnalytics as a, relayWebhook as b, createSsrRpc as c, exportSupabaseSql as d, getSupabaseAccessToken as f, loadCloudAnalytics as g, loadAnalytics as h, SiteConfigProvider as i, exportConfigFile as l, isDuplicateLeadRemote as m, DEFAULT_CONFIG as n, clearLeads as o, isDuplicateLead as p, LEAD_CREATED_EVENT as r, clearSupabaseAccessToken as s, ANALYTICS_UPDATED_EVENT as t, exportLeadsCsv as u, loadLeads as v, testSupabaseConnection as w, saveConfigWithCredentials as x, migrateLocalDataToSupabase as y };

@@ -14,6 +14,7 @@ import {
 import type { VisitorBehaviorPayload } from "@/types/visitor-tracking";
 import { relayWebhook } from "@/services/webhook.functions";
 import { getSupabaseAccessToken } from "@/lib/supabase-auth";
+import { saveConfigWithSupabaseAuth } from "@/services/config.functions";
 
 const CONFIG_KEY = "funnel_site_config_v1";
 const LEADS_KEY = "funnel_leads_v1";
@@ -227,23 +228,61 @@ export async function loadCloudConfig(
   }
 }
 
-export function saveConfig(config: SiteConfig): void {
-  if (!isBrowser()) return;
+export async function saveConfig(config: SiteConfig): Promise<boolean> {
+  if (!isBrowser()) return false;
   if (config.admin.storageMode !== "database") {
     clearClientCache();
     console.error("Local storage mode is disabled; configure Supabase first.");
-    return;
+    return false;
   }
   if (config.admin.storageMode === "database") {
     clearClientCache();
     if (config.admin.supabaseUrl && config.admin.supabaseAnonKey) {
-      void syncConfigToSupabase(config);
+      return await syncConfigToSupabase(config);
     } else {
       console.error(
         "Database mode requires VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.",
       );
     }
-    return;
+    return false;
+  }
+  return false;
+}
+
+export async function saveConfigWithCredentials(
+  config: SiteConfig,
+  password: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  if (
+    !isBrowser() ||
+    !config.admin.supabaseUrl ||
+    !config.admin.supabaseAnonKey
+  ) {
+    return { ok: false, reason: "missing_config" };
+  }
+  try {
+    const result = await saveConfigWithSupabaseAuth({
+      data: {
+        url: config.admin.supabaseUrl,
+        anonKey: config.admin.supabaseAnonKey,
+        email: config.admin.supabaseAdminEmail,
+        password,
+        config: config as unknown as Record<string, unknown>,
+      },
+    });
+    if (result.ok) {
+      try {
+        window.sessionStorage.setItem(
+          "funnel_supabase_access_token_v1",
+          result.accessToken,
+        );
+      } catch {
+        /* session storage may be blocked */
+      }
+    }
+    return result;
+  } catch {
+    return { ok: false, reason: "server_unavailable" };
   }
 }
 
@@ -276,6 +315,7 @@ export function exportSupabaseSql(config: SiteConfig): void {
   if (!isBrowser()) return;
   const cloudConfig = structuredClone(config);
   cloudConfig.admin.supabaseAnonKey = "";
+  cloudConfig.admin.password = "";
   cloudConfig.admin.backupCronToken = "";
   cloudConfig.emailAutomation.resendApiKey = "";
   cloudConfig.emailAutomation.gmailClientId = "";
@@ -291,18 +331,18 @@ alter table public.funnel_configs enable row level security;
 drop policy if exists "funnel configs can be read" on public.funnel_configs;
 create policy "funnel configs can be read" on public.funnel_configs for select using (true);
 drop policy if exists "funnel configs can be written" on public.funnel_configs;
-create policy "funnel configs can be written" on public.funnel_configs for insert with check (id = 1);
+create policy "funnel configs can be written" on public.funnel_configs for insert to authenticated with check (id = 1);
 drop policy if exists "funnel configs can be updated" on public.funnel_configs;
-create policy "funnel configs can be updated" on public.funnel_configs for update using (id = 1) with check (id = 1);
+create policy "funnel configs can be updated" on public.funnel_configs for update to authenticated using (id = 1) with check (id = 1);
 
 create table if not exists public.funnel_analytics (id bigint primary key, data jsonb not null, updated_at timestamptz not null default now());
 alter table public.funnel_analytics enable row level security;
 drop policy if exists "funnel analytics can be read" on public.funnel_analytics;
-create policy "funnel analytics can be read" on public.funnel_analytics for select using (true);
+create policy "funnel analytics can be read" on public.funnel_analytics for select to authenticated;
 drop policy if exists "funnel analytics can be written" on public.funnel_analytics;
-create policy "funnel analytics can be written" on public.funnel_analytics for insert with check (id = 1);
+create policy "funnel analytics can be written" on public.funnel_analytics for insert to authenticated with check (id = 1);
 drop policy if exists "funnel analytics can be updated" on public.funnel_analytics;
-create policy "funnel analytics can be updated" on public.funnel_analytics for update using (id = 1) with check (id = 1);
+create policy "funnel analytics can be updated" on public.funnel_analytics for update to authenticated using (id = 1) with check (id = 1);
 
 create table if not exists public.leads (id uuid primary key default gen_random_uuid(), created_at timestamptz not null default now(), name text, phone text, email text, city text, major text, ai_score int, ai_rank text, risk_level text, risk_reasons text[], recommended_action text, behavior_summary text, sale_advice text, device_tech_info text, traffic_ads_source text, network_provider text, network_label text, current_session int, visits_today int, visits_month int, utm_source text, utm_medium text, utm_campaign text, utm_content text, utm_term text, fbclid text, ttclid text, gclid text, raw_query text, referrer text, attribution_model text, attribution_detected_by text, utm_params jsonb, variant text, landing_url text, device_manufacturer text, device_family text, device_model text, operating_system text, browser text, visitor_behavior_payload jsonb);
 alter table public.leads enable row level security;
@@ -314,7 +354,7 @@ alter table public.visitor_sessions enable row level security;
 drop policy if exists "visitor sessions can be created by public form" on public.visitor_sessions;
 create policy "visitor sessions can be created by public form" on public.visitor_sessions for insert with check (true);
 drop policy if exists "visitor sessions can be counted by public form" on public.visitor_sessions;
-create policy "visitor sessions can be counted by public form" on public.visitor_sessions for select using (true);
+create policy "visitor sessions can be counted by public form" on public.visitor_sessions for select to authenticated;
 
 insert into public.funnel_configs (id, data, updated_at) values (1, ${sqlJson(cloudConfig)}, now()) on conflict (id) do update set data = excluded.data, updated_at = excluded.updated_at;
 insert into public.funnel_analytics (id, data, updated_at) values (1, ${sqlJson(analytics)}, now()) on conflict (id) do update set data = excluded.data, updated_at = excluded.updated_at;
@@ -939,7 +979,7 @@ export function clearAnalytics(): void {
 /* ------------------------------- SUPABASE --------------------------------- */
 
 /** Ghi config vào bảng `site_config` (id=1) qua Supabase REST. Best-effort. */
-async function syncConfigToSupabase(config: SiteConfig): Promise<void> {
+async function syncConfigToSupabase(config: SiteConfig): Promise<boolean> {
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), 5_000);
   try {
@@ -971,8 +1011,10 @@ async function syncConfigToSupabase(config: SiteConfig): Promise<void> {
     if (!response.ok) {
       console.warn(`Supabase config sync failed [${response.status}]`);
     }
+    return response.ok;
   } catch (err) {
     console.warn("Supabase config sync failed:", (err as Error).message);
+    return false;
   } finally {
     window.clearTimeout(timer);
   }

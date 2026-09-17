@@ -1,7 +1,7 @@
 import { c as createServerFn } from "./createServerFn-CIHAFgYl.mjs";
 import { i as stringType, n as objectType, t as enumType } from "../_libs/zod.mjs";
-import { b as relayWebhook, c as createSsrRpc } from "./use-site-config-CCuN-Fru.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/ab-CzJmWlKk.js
+import { b as relayWebhook, c as createSsrRpc } from "./use-site-config-DfPbtmQN.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/ab-CRLWdZqr.js
 /**
 * AUTOMATED EMAIL SEQUENCER (auto-responder).
 * Gửi email cảm ơn ngay sau khi khách đăng ký. Chạy phía server.
@@ -24,8 +24,6 @@ var sendLeadEmail = createServerFn({ method: "POST" }).validator((data) => schem
 var sendTestEmail = createServerFn({ method: "POST" }).validator((data) => schema.parse(data)).handler(createSsrRpc("d732dbd0324b5de3cd27374b91a2d4196cd6a42ec4166af82f02cfbf6319a58a"));
 var FIRST_TOUCH_KEY = "lp_utm_first_v4";
 var LAST_TOUCH_KEY = "lp_utm_last_v4";
-/** Khoá cũ — vẫn đọc để không mất dữ liệu khách đã ghé trước đây */
-var LEGACY_KEYS = ["lp_utm_first_v3", "lp_utm_v2"];
 var memoryStore = /* @__PURE__ */ new Map();
 var UNKNOWN_SOURCE = "unknown_inapp_or_referral";
 var UTM_KEYS = [
@@ -396,25 +394,6 @@ function merge(base, next) {
 	return out;
 }
 /** Đọc dữ liệu từ các phiên bản lưu trữ cũ để không mất nguồn */
-function readLegacy() {
-	if (!isBrowser()) return null;
-	for (const key of LEGACY_KEYS) try {
-		const raw = window.localStorage.getItem(key);
-		if (!raw) continue;
-		const parsed = JSON.parse(raw);
-		const record = {
-			...EMPTY_RECORD,
-			params: {},
-			click_ids: parsed["click_ids"] || {}
-		};
-		for (const k of UTM_KEYS) record[k] = clean(parsed[k]);
-		if (record.utm_source || record.utm_campaign) {
-			record.detected_by = "stored";
-			return record;
-		}
-	} catch {}
-	return null;
-}
 var cached = null;
 function hasSignal(record) {
 	return Boolean(record.utm_source || record.utm_campaign || Object.keys(record.click_ids).length > 0);
@@ -440,7 +419,7 @@ function captureUtm(force = false) {
 	if (cached && !force) return cached;
 	try {
 		const current = parseCurrentUrl();
-		const storedFirst = safeRead("local", FIRST_TOUCH_KEY) ?? readLegacy();
+		const storedFirst = safeRead("local", FIRST_TOUCH_KEY);
 		const storedLast = safeRead("session", LAST_TOUCH_KEY);
 		const first = storedFirst ? merge(storedFirst, {
 			...current,

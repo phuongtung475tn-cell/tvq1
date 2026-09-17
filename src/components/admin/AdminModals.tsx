@@ -16,6 +16,7 @@ import {
   loadAnalytics,
   loadCloudAnalytics,
   loadCloudLeads,
+  saveConfigWithCredentials,
   loadLeads,
   migrateLocalDataToSupabase,
   exportSupabaseSql,
@@ -1632,6 +1633,9 @@ function StorageModal({ onClose }: ModalProps) {
   const [testing, setTesting] = useState<SupabaseConnectionStatus | null>(null);
   const [migration, setMigration] = useState<string | null>(null);
   const [migrating, setMigrating] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [savingConnection, setSavingConnection] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   return (
     <AdminModal
       title="Storage Mode"
@@ -1689,6 +1693,48 @@ function StorageModal({ onClose }: ModalProps) {
               }
             />
           </Field>
+          <Field
+            label="Mật khẩu Supabase Auth (chỉ dùng để xác thực lần lưu đầu tiên)"
+            hint="Mật khẩu không được lưu vào cấu hình hoặc Supabase."
+          >
+            <TextInput
+              type="password"
+              autoComplete="current-password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+            />
+          </Field>
+          <button
+            type="button"
+            disabled={
+              savingConnection || !a.supabaseAdminEmail || !adminPassword
+            }
+            onClick={async () => {
+              setSavingConnection(true);
+              setSaveMessage(null);
+              const result = await saveConfigWithCredentials(
+                config,
+                adminPassword,
+              );
+              setSaveMessage(
+                result.ok
+                  ? "Đã xác thực và lưu cấu hình vào Supabase."
+                  : `Chưa lưu được: ${result.reason || "lỗi không xác định"}. Kiểm tra biến SUPABASE_SERVICE_ROLE_KEY trên Vercel.`,
+              );
+              setSavingConnection(false);
+              if (result.ok) setAdminPassword("");
+            }}
+            className="mb-3 rounded-lg bg-sky-700 px-3 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {savingConnection
+              ? "Đang xác thực và lưu..."
+              : "Lưu cấu hình Supabase"}
+          </button>
+          {saveMessage && (
+            <p className="mb-3 text-xs font-semibold text-sky-700">
+              {saveMessage}
+            </p>
+          )}
           <button
             onClick={async () => {
               setTesting(null);

@@ -395,30 +395,6 @@ function merge(base: UtmRecord | null, next: UtmRecord): UtmRecord {
 }
 
 /** Đọc dữ liệu từ các phiên bản lưu trữ cũ để không mất nguồn */
-function readLegacy(): UtmRecord | null {
-  if (!isBrowser()) return null;
-  for (const key of LEGACY_KEYS) {
-    try {
-      const raw = window.localStorage.getItem(key);
-      if (!raw) continue;
-      const parsed = JSON.parse(raw) as Record<string, unknown>;
-      const record: UtmRecord = {
-        ...EMPTY_RECORD,
-        params: {},
-        click_ids: (parsed["click_ids"] as Record<string, string>) || {},
-      };
-      for (const k of UTM_KEYS) record[k] = clean(parsed[k] as string);
-      if (record.utm_source || record.utm_campaign) {
-        record.detected_by = "stored";
-        return record;
-      }
-    } catch {
-      /* ignore */
-    }
-  }
-  return null;
-}
-
 let cached: { first: UtmRecord; last: UtmRecord } | null = null;
 
 function hasSignal(record: UtmRecord) {
@@ -445,7 +421,7 @@ export function captureUtm(force = false): {
   if (cached && !force) return cached;
   try {
     const current = parseCurrentUrl();
-    const storedFirst = safeRead("local", FIRST_TOUCH_KEY) ?? readLegacy();
+    const storedFirst = safeRead("local", FIRST_TOUCH_KEY);
     const storedLast = safeRead("session", LAST_TOUCH_KEY);
 
     // First-touch: giữ nguyên nguồn gốc, chỉ bổ sung ô còn trống
@@ -560,11 +536,7 @@ export function withUtm<T extends Record<string, unknown>>(
 export function resetUtm() {
   cached = null;
   if (!isBrowser()) return;
-  try {
-    window.localStorage.removeItem(FIRST_TOUCH_KEY);
-    for (const key of LEGACY_KEYS) window.localStorage.removeItem(key);
-    window.sessionStorage.removeItem(LAST_TOUCH_KEY);
-  } catch {
-    /* ignore */
-  }
+  memoryStore.delete(`local:${FIRST_TOUCH_KEY}`);
+  memoryStore.delete(`session:${LAST_TOUCH_KEY}`);
+  for (const key of LEGACY_KEYS) memoryStore.delete(`local:${key}`);
 }

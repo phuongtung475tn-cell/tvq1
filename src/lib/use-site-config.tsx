@@ -23,7 +23,7 @@ interface SiteConfigContextValue {
   /** Cập nhật trong bộ nhớ (chưa lưu) — dùng cho form Admin. */
   update: (patch: (draft: SiteConfig) => void) => void;
   /** Ghi xuống storage (localStorage / Supabase). */
-  save: () => void;
+  save: () => Promise<boolean>;
   /** Nạp lại cấu hình gốc từ src/config. */
   reset: () => void;
   resetLanding: () => void;
@@ -62,13 +62,11 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
     setDirty(true);
   }, []);
 
-  const save = useCallback(() => {
-    setConfig((current) => {
-      saveConfig(current);
-      return current;
-    });
-    setDirty(false);
-  }, []);
+  const save = useCallback(async () => {
+    const saved = await saveConfig(config);
+    if (saved) setDirty(false);
+    return saved;
+  }, [config]);
 
   const reset = useCallback(() => {
     setConfig(resetConfig());
@@ -93,7 +91,7 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
   const importConfig = useCallback((raw: string) => {
     const parsed = parseImportedConfig(raw);
     if (!parsed) return false;
-    saveConfig(parsed);
+    void saveConfig(parsed);
     setConfig(parsed);
     setDirty(false);
     return true;

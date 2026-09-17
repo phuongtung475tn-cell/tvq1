@@ -10,12 +10,20 @@ export function AdminLoginPage() {
   const { config, ready: configReady } = useSiteConfig();
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState(config.admin.supabaseAdminEmail);
+  const [supabaseUrl, setSupabaseUrl] = useState(config.admin.supabaseUrl);
+  const [supabaseKey, setSupabaseKey] = useState(config.admin.supabaseAnonKey);
   const [error, setError] = useState(false);
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setEmail(config.admin.supabaseAdminEmail);
-  }, [config.admin.supabaseAdminEmail]);
+    setSupabaseUrl(config.admin.supabaseUrl);
+    setSupabaseKey(config.admin.supabaseAnonKey);
+  }, [
+    config.admin.supabaseAdminEmail,
+    config.admin.supabaseUrl,
+    config.admin.supabaseAnonKey,
+  ]);
 
   async function handleSubmit() {
     const nextPassword = passwordInputRef.current?.value ?? password;
@@ -23,8 +31,8 @@ export function AdminLoginPage() {
       await login(
         nextPassword,
         config.admin.password,
-        config.admin.supabaseUrl,
-        config.admin.supabaseAnonKey,
+        supabaseUrl,
+        supabaseKey,
         email,
       )
     ) {
@@ -60,17 +68,35 @@ export function AdminLoginPage() {
         ) : (
           <div className="space-y-3">
             {config.admin.storageMode === "database" && (
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setError(false);
-                }}
-                placeholder="Email Supabase Auth"
-                autoComplete="username"
-                className="w-full rounded-lg bg-neutral-800 px-3 py-2.5 text-sm outline-none ring-1 ring-white/10 focus:ring-white/30"
-              />
+              <>
+                <input
+                  type="url"
+                  value={supabaseUrl}
+                  onChange={(e) => setSupabaseUrl(e.target.value)}
+                  placeholder="https://your-project.supabase.co"
+                  autoComplete="url"
+                  className="w-full rounded-lg bg-neutral-800 px-3 py-2.5 text-sm outline-none ring-1 ring-white/10 focus:ring-white/30"
+                />
+                <input
+                  type="password"
+                  value={supabaseKey}
+                  onChange={(e) => setSupabaseKey(e.target.value)}
+                  placeholder="Supabase publishable/anon key"
+                  autoComplete="off"
+                  className="w-full rounded-lg bg-neutral-800 px-3 py-2.5 text-sm outline-none ring-1 ring-white/10 focus:ring-white/30"
+                />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError(false);
+                  }}
+                  placeholder="Email Supabase Auth"
+                  autoComplete="username"
+                  className="w-full rounded-lg bg-neutral-800 px-3 py-2.5 text-sm outline-none ring-1 ring-white/10 focus:ring-white/30"
+                />
+              </>
             )}
             <input
               ref={passwordInputRef}

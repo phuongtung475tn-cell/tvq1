@@ -1,17 +1,17 @@
-import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-hZzAbtud.mjs";
+import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-SwdlihR5.mjs";
 import { c as HeadContent, d as createRouter, f as Outlet, g as Link, h as createRootRouteWithContext, l as useRouterState, m as createFileRoute, p as lazyRouteComponent, s as Scripts, v as useRouter } from "../_libs/@tanstack/react-router+[...].mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { C as testSupabaseConnection, E as useSiteConfig, T as trackVisit, _ as loadCloudLeads, a as clearAnalytics, d as exportSupabaseSql, g as loadCloudAnalytics, h as loadAnalytics, i as SiteConfigProvider, l as exportConfigFile, n as DEFAULT_CONFIG, o as clearLeads, r as LEAD_CREATED_EVENT, t as ANALYTICS_UPDATED_EVENT, u as exportLeadsCsv, v as loadLeads, x as saveLead, y as migrateLocalDataToSupabase } from "./use-site-config-CCuN-Fru.mjs";
-import { n as useAdmin, t as AdminProvider } from "./use-admin-B9NKVHad.mjs";
+import { D as useSiteConfig, E as trackVisit, S as saveLead, _ as loadCloudLeads, a as clearAnalytics, d as exportSupabaseSql, g as loadCloudAnalytics, h as loadAnalytics, i as SiteConfigProvider, l as exportConfigFile, n as DEFAULT_CONFIG, o as clearLeads, r as LEAD_CREATED_EVENT, t as ANALYTICS_UPDATED_EVENT, u as exportLeadsCsv, v as loadLeads, w as testSupabaseConnection, x as saveConfigWithCredentials, y as migrateLocalDataToSupabase } from "./use-site-config-DfPbtmQN.mjs";
+import { n as useAdmin, t as AdminProvider } from "./use-admin-B2CgoStD.mjs";
 import { A as EyeOff, D as Globe, E as GraduationCap, F as ClipboardList, I as ChartColumn, M as Database, N as CloudUpload, O as FileText, P as Clock, R as BookOpen, S as LogOut, T as KeyRound, _ as Monitor, a as Tablet, b as Megaphone, c as Smartphone, d as Save, f as Plus, h as Palette, i as Target, j as Download, k as Eye, l as Settings2, m as Pencil, o as SquareSplitHorizontal, p as Phone, r as Trash2, s as Sparkles, t as X, u as Search, w as Link2, x as Mail, z as Bell } from "../_libs/lucide-react.mjs";
-import { c as resetVariant, d as testWebhookEndpoint, g as webhookConfigurationWarning, h as utmSource, i as fireTestEvent, n as checkEmailConfig, o as getUtmPayload, p as trackInteraction, s as getVariant, t as captureUtm, u as sendTestEmail } from "./ab-CzJmWlKk.mjs";
+import { c as resetVariant, d as testWebhookEndpoint, g as webhookConfigurationWarning, h as utmSource, i as fireTestEvent, n as checkEmailConfig, o as getUtmPayload, p as trackInteraction, s as getVariant, t as captureUtm, u as sendTestEmail } from "./ab-CRLWdZqr.mjs";
 import { t as QueryClientProvider } from "../_libs/tanstack__react-query.mjs";
 import { t as QueryClient } from "../_libs/tanstack__query-core.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-FYdgXi3D.js
+//#region node_modules/.nitro/vite/services/ssr/assets/router-UZm6pBLX.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
-var styles_default = "/assets/styles-DfEa8-_U.css";
+var styles_default = "/assets/styles-yXnvpPDS.css";
 function reportLovableError(error, context = {}) {
 	if (typeof window === "undefined") return;
 	window.__lovableEvents?.captureException?.(error, {
@@ -1980,6 +1980,9 @@ function StorageModal({ onClose }) {
 	const [testing, setTesting] = (0, import_react.useState)(null);
 	const [migration, setMigration] = (0, import_react.useState)(null);
 	const [migrating, setMigrating] = (0, import_react.useState)(false);
+	const [adminPassword, setAdminPassword] = (0, import_react.useState)("");
+	const [savingConnection, setSavingConnection] = (0, import_react.useState)(false);
+	const [saveMessage, setSaveMessage] = (0, import_react.useState)(null);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(AdminModal, {
 		title: "Storage Mode",
 		subtitle: "Kết nối Supabase và xác thực quản trị",
@@ -2023,6 +2026,34 @@ function StorageModal({ onClose }) {
 						value: a.supabaseAdminEmail,
 						onChange: (e) => update((d) => d.admin.supabaseAdminEmail = e.target.value)
 					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+					label: "Mật khẩu Supabase Auth (chỉ dùng để xác thực lần lưu đầu tiên)",
+					hint: "Mật khẩu không được lưu vào cấu hình hoặc Supabase.",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+						type: "password",
+						autoComplete: "current-password",
+						value: adminPassword,
+						onChange: (e) => setAdminPassword(e.target.value)
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					disabled: savingConnection || !a.supabaseAdminEmail || !adminPassword,
+					onClick: async () => {
+						setSavingConnection(true);
+						setSaveMessage(null);
+						const result = await saveConfigWithCredentials(config, adminPassword);
+						setSaveMessage(result.ok ? "Đã xác thực và lưu cấu hình vào Supabase." : `Chưa lưu được: ${result.reason || "lỗi không xác định"}. Kiểm tra biến SUPABASE_SERVICE_ROLE_KEY trên Vercel.`);
+						setSavingConnection(false);
+						if (result.ok) setAdminPassword("");
+					},
+					className: "mb-3 rounded-lg bg-sky-700 px-3 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-40",
+					children: savingConnection ? "Đang xác thực và lưu..." : "Lưu cấu hình Supabase"
+				}),
+				saveMessage && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mb-3 text-xs font-semibold text-sky-700",
+					children: saveMessage
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 					onClick: async () => {
@@ -4089,6 +4120,7 @@ function SaveHint() {
 		})
 	});
 }
+var visitCounted = /* @__PURE__ */ new Set();
 /** Chèn một thẻ <script> nội tuyến một lần duy nhất. */
 function injectInline(id, code, target = "head") {
 	if (!code.trim() || document.getElementById(id)) return;
@@ -4288,14 +4320,10 @@ function RuntimeConfig() {
 	}, []);
 	(0, import_react.useEffect)(() => {
 		const experimentKey = `funnel_visit_counted_v2_${config.abTest.enabled ? "ab" : "plain"}_${config.abTest.split}`;
-		try {
-			if (sessionStorage.getItem(experimentKey) === "1") return;
-		} catch {}
+		if (visitCounted.has(experimentKey)) return;
 		const variant = getVariant(config.abTest.enabled, config.abTest.split);
 		trackVisit(utmSource(), config.abTest.enabled ? variant : void 0);
-		try {
-			sessionStorage.setItem(experimentKey, "1");
-		} catch {}
+		visitCounted.add(experimentKey);
 	}, [config.abTest.enabled, config.abTest.split]);
 	return null;
 }
@@ -4440,7 +4468,7 @@ function RootComponent() {
 		] }) })
 	});
 }
-var $$splitComponentImporter$2 = () => import("./routes-BAIswJxu.mjs");
+var $$splitComponentImporter$2 = () => import("./routes-DadnBc9H.mjs");
 var TITLE = "Du Học Nghề Trung Quốc 0Đ | Vừa Học Vừa Làm Lương 15-30 Triệu";
 var DESC = "Du học nghề Trung Quốc học phí 0Đ: học 20% lý thuyết - 80% thực hành, lương cứng 15-30 triệu/tháng, bằng Cao đẳng chính quy quốc tế. Đăng ký nhận lộ trình miễn phí.";
 var FAQ_JSONLD = JSON.stringify({
@@ -4518,9 +4546,9 @@ var Route$2 = createFileRoute("/")({
 	}),
 	component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-var $$splitComponentImporter$1 = () => import("../_-BanaLm9X.mjs");
+var $$splitComponentImporter$1 = () => import("../_-YoNAdj6z.mjs");
 var Route$1 = createFileRoute("/$")({ component: lazyRouteComponent($$splitComponentImporter$1, "component") });
-var $$splitComponentImporter = () => import("./admin-D8uhUTop.mjs");
+var $$splitComponentImporter = () => import("./admin-DD-Uo7vA.mjs");
 var Route = createFileRoute("/admin")({ component: lazyRouteComponent($$splitComponentImporter, "component") });
 var rootRouteChildren = {
 	IndexRoute: Route$2.update({

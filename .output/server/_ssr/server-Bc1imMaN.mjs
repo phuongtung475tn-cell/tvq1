@@ -1,4 +1,4 @@
-import { t as getServerFnById } from "../__23tanstack-start-server-fn-resolver-hZzAbtud.mjs";
+import { t as getServerFnById } from "../__23tanstack-start-server-fn-resolver-SwdlihR5.mjs";
 import { n as toResponse, t as H3Event } from "../_libs/h3-v2+rou3+srvx.mjs";
 import { C as getScriptPreloadAttrs, D as executeRewriteInput, E as resolveManifestCssLink, M as isNotFound, O as isRedirect, P as invariant, T as resolveManifestAssetLink, a as replaceSsrResponse, i as normalizeSsrResponse, j as rootRouteId, k as isResolvedRedirect, n as defineHandlerCallback, o as stripSsrResponseBody, r as isSsrResponse, t as renderRouterToStream, u as RouterProvider, w as getStylesheetHref } from "../_libs/@tanstack/react-router+[...].mjs";
 import { n as createMemoryHistory } from "../_libs/tanstack__history.mjs";
@@ -84,7 +84,7 @@ var HEADERS = { TSS_SHELL: "X-TSS_SHELL" };
 * the dev styles URL for route-scoped CSS collection.
 */
 async function getStartManifest(matchedRoutes) {
-	const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-B0IfGvnX.mjs");
+	const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-DYfW0E_E.mjs");
 	const startManifest = tsrStartManifest();
 	let routes = startManifest.routes;
 	routes[rootRouteId];
@@ -1027,7 +1027,7 @@ var getBaseManifest = getProdBaseManifest;
 var createEarlyHintsForRequest = createEarlyHintsCollector;
 async function loadEntries() {
 	const [routerEntry, startEntry, pluginAdapters] = await Promise.all([
-		import("./router-FYdgXi3D.mjs"),
+		import("./router-UZm6pBLX.mjs"),
 		import("./start-RKGGYzjZ.mjs"),
 		import("./empty-plugin-adapters-D9UWiqvJ.mjs")
 	]);
