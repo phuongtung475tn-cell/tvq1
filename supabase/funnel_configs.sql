@@ -26,10 +26,10 @@ create policy "funnel configs can be read" on public.funnel_configs for select u
 drop policy if exists "funnel configs can be written" on public.funnel_configs;
 drop policy if exists "funnel configs can be updated" on public.funnel_configs;
 create policy "funnel configs can be written" on public.funnel_configs for insert to authenticated
-  with check (id = 1 and exists (select 1 from public.admin_users where user_id = auth.uid() and enabled = true and role in ('admin', 'owner')));
+  with check (id = 1 and public.is_funnel_admin());
 create policy "funnel configs can be updated" on public.funnel_configs for update to authenticated
-  using (id = 1 and exists (select 1 from public.admin_users where user_id = auth.uid() and enabled = true and role in ('admin', 'owner')))
-  with check (id = 1 and exists (select 1 from public.admin_users where user_id = auth.uid() and enabled = true and role in ('admin', 'owner')));
+  using (id = 1 and public.is_funnel_admin())
+  with check (id = 1 and public.is_funnel_admin());
 
 create table if not exists public.funnel_analytics (
   id bigint primary key,
@@ -42,9 +42,9 @@ create policy "funnel analytics can be read" on public.funnel_analytics for sele
 drop policy if exists "funnel analytics can be written" on public.funnel_analytics;
 drop policy if exists "funnel analytics can be updated" on public.funnel_analytics;
 create policy "funnel analytics can be written" on public.funnel_analytics for insert to authenticated
-  with check (id = 1 and exists (select 1 from public.admin_users where user_id = auth.uid() and enabled = true and role in ('admin', 'owner')));
+  with check (id = 1 and public.is_funnel_admin());
 create policy "funnel analytics can be updated" on public.funnel_analytics for update to authenticated
-  using (id = 1 and exists (select 1 from public.admin_users where user_id = auth.uid() and enabled = true and role in ('admin', 'owner')))
-  with check (id = 1 and exists (select 1 from public.admin_users where user_id = auth.uid() and enabled = true and role in ('admin', 'owner')));
+  using (id = 1 and public.is_funnel_admin())
+  with check (id = 1 and public.is_funnel_admin());
 
 update public.funnel_configs set data = data #- '{admin,password}' where id = 1;

@@ -97,7 +97,7 @@ Dùng để cấu hình, lead và analytics đồng bộ nhiều thiết bị. D
 4. Chạy lại đoạn `insert into public.admin_users ...` trong `supabase/admin_users.sql` sau khi user đã tồn tại, hoặc thay email trong câu SQL bằng email thực tế của admin. Kiểm tra user có một dòng `enabled = true` trong `public.admin_users`.
 5. Trong Vercel đặt `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` và `VITE_SUPABASE_ADMIN_EMAIL`. Chỉ dùng publishable/anon key ở frontend; tuyệt đối không dùng service role key.
 6. Redeploy rồi mở `/admin`. Đăng nhập bằng email Supabase Auth và mật khẩu của user, không dùng mật khẩu admin cũ trong mã nguồn.
-7. Nếu đăng nhập thành công nhưng lưu analytics báo 403, chạy `supabase/admin_rls_patch.sql`; nguyên nhân thường là project vẫn dùng policy cũ dựa trên `app_metadata.role`, trong khi ứng dụng cấp quyền qua `admin_users`.
+7. Nếu đăng nhập thành công nhưng lưu analytics báo 403, chạy `supabase/admin_rls_patch.sql`; patch tạo function `is_funnel_admin()` với `security definer` để policy không bị RLS lồng chặn.
 
 Kiểm tra nhanh trong Supabase sau khi đăng nhập:
 
@@ -138,6 +138,7 @@ Phải nhận HTTP `200 Backup sent`. Nếu nhận `503`, kiểm tra đủ biế
 ## E. Checklist sau khi deploy
 
 - [ ] Trang chủ mở được qua HTTPS.
+- [ ] Mở đúng `https://tvq1.vercel.app`, không dùng `http://`; HTTP phải tự chuyển 308 sang HTTPS.
 - [ ] Supabase Auth có user admin và `public.admin_users.enabled = true`.
 - [ ] `/admin` đăng nhập được bằng email/mật khẩu Supabase Auth; refresh trang vẫn giữ phiên tới khi token hết hạn.
 - [ ] Admin đọc được `leads` sau khi đăng nhập, không dùng service role key trên trình duyệt.
