@@ -403,6 +403,11 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
 
       // Automated Email Sequencer (auto-responder) — chạy phía server nếu bật.
       if (config.emailAutomation.enabled) {
+        const emailTasks: Promise<{
+          sent: boolean;
+          reason?: string;
+          detail?: string;
+        }>[] = [];
         const fill = (s: string) =>
           s
             .replaceAll("{name}", payload.full_name)
@@ -422,42 +427,52 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
             .replaceAll("{ai_score}", String(aiScore))}</div>`;
         // Email cảm ơn gửi tới khách (nếu khách cung cấp email)
         if (email) {
-          void sendLeadEmail({
-            data: {
-              provider: config.emailAutomation.provider,
-              to: email,
-              from: config.emailAutomation.fromEmail,
-              subject: fill(config.emailAutomation.subject),
-              text: fill(config.emailAutomation.body),
-              html: htmlBody(config.emailAutomation.body),
-              resendApiKey: config.emailAutomation.resendApiKey,
-              gmailClientId: config.emailAutomation.gmailClientId,
-              gmailClientSecret: config.emailAutomation.gmailClientSecret,
-              gmailRefreshToken: config.emailAutomation.gmailRefreshToken,
-            },
-          }).catch((error) =>
-            console.warn("Lead confirmation email failed:", error),
+          emailTasks.push(
+            sendLeadEmail({
+              data: {
+                provider: config.emailAutomation.provider,
+                to: email,
+                from: config.emailAutomation.fromEmail,
+                subject: fill(config.emailAutomation.subject),
+                text: fill(config.emailAutomation.body),
+                html: htmlBody(config.emailAutomation.body),
+                resendApiKey: config.emailAutomation.resendApiKey,
+                gmailClientId: config.emailAutomation.gmailClientId,
+                gmailClientSecret: config.emailAutomation.gmailClientSecret,
+                gmailRefreshToken: config.emailAutomation.gmailRefreshToken,
+              },
+            }),
           );
         }
         // Email thông báo lead mới gửi tới admin/đội ngũ tư vấn
         const notifyTo = config.emailAutomation.notifyEmail.trim();
         if (notifyTo) {
-          void sendLeadEmail({
-            data: {
-              provider: config.emailAutomation.provider,
-              to: notifyTo,
-              from: config.emailAutomation.fromEmail,
-              subject: fill(config.emailAutomation.notifySubject),
-              text: fill(config.emailAutomation.notifyBody),
-              html: htmlBody(config.emailAutomation.notifyBody),
-              resendApiKey: config.emailAutomation.resendApiKey,
-              gmailClientId: config.emailAutomation.gmailClientId,
-              gmailClientSecret: config.emailAutomation.gmailClientSecret,
-              gmailRefreshToken: config.emailAutomation.gmailRefreshToken,
-            },
-          }).catch((error) =>
-            console.warn("Admin notification email failed:", error),
+          emailTasks.push(
+            sendLeadEmail({
+              data: {
+                provider: config.emailAutomation.provider,
+                to: notifyTo,
+                from: config.emailAutomation.fromEmail,
+                subject: fill(config.emailAutomation.notifySubject),
+                text: fill(config.emailAutomation.notifyBody),
+                html: htmlBody(config.emailAutomation.notifyBody),
+                resendApiKey: config.emailAutomation.resendApiKey,
+                gmailClientId: config.emailAutomation.gmailClientId,
+                gmailClientSecret: config.emailAutomation.gmailClientSecret,
+                gmailRefreshToken: config.emailAutomation.gmailRefreshToken,
+              },
+            }),
           );
+        }
+        const emailResults = await Promise.all(emailTasks);
+        const failedEmail = emailResults.find((result) => !result.sent);
+        if (failedEmail) {
+          console.warn("Automated email failed:", failedEmail);
+          toast.warning("Lead đã lưu, nhưng email chưa gửi được.", {
+            description:
+              failedEmail.detail ||
+              `Kiểm tra cấu hình Resend (${failedEmail.reason || "provider_error"}).`,
+          });
         }
       }
 

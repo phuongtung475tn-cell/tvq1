@@ -91,8 +91,15 @@ function providerFailure(status: number, detail: string) {
     sent: false as const,
     reason: "provider_error" as const,
     status,
-    detail: detail.replace(/\s+/g, " ").trim().slice(0, 240),
+    detail: explainProviderFailure(status, detail),
   };
+}
+
+function explainProviderFailure(status: number, detail: string): string {
+  if (status === 403 && detail.includes("testing emails")) {
+    return "Resend đang ở chế độ testing: chỉ gửi được tới email chủ tài khoản. Hãy verify domain trên Resend để gửi cho khách hàng.";
+  }
+  return detail.replace(/\s+/g, " ").trim().slice(0, 240);
 }
 
 const FREE_EMAIL_DOMAINS = new Set([
