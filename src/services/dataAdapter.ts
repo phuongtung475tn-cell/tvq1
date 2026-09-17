@@ -888,18 +888,15 @@ async function syncAnalyticsToSupabase(
 ): Promise<boolean> {
   try {
     const response = await fetch(
-      `${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/${CLOUD_ANALYTICS_TABLE}?on_conflict=id`,
+      `${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/rpc/upsert_funnel_analytics`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Prefer: "resolution=merge-duplicates,return=minimal",
           apikey: config.admin.supabaseAnonKey,
           Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`,
         },
-        body: JSON.stringify([
-          { id: 1, data: state, updated_at: new Date().toISOString() },
-        ]),
+        body: JSON.stringify({ p_data: state }),
       },
     );
     return response.ok;

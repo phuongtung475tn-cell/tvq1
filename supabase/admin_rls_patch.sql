@@ -19,6 +19,27 @@ $$;
 revoke all on function public.is_funnel_admin() from public;
 grant execute on function public.is_funnel_admin() to authenticated;
 
+create or replace function public.upsert_funnel_analytics(p_data jsonb)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_funnel_admin() then
+    raise exception 'admin access required';
+  end if;
+
+  insert into public.funnel_analytics (id, data, updated_at)
+  values (1, p_data, now())
+  on conflict (id) do update
+    set data = excluded.data, updated_at = excluded.updated_at;
+end;
+$$;
+
+revoke all on function public.upsert_funnel_analytics(jsonb) from public;
+grant execute on function public.upsert_funnel_analytics(jsonb) to authenticated;
+
 drop policy if exists "funnel analytics can be written" on public.funnel_analytics;
 drop policy if exists "funnel analytics can be updated" on public.funnel_analytics;
 
