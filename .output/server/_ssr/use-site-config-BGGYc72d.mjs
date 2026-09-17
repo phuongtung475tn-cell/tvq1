@@ -3,7 +3,7 @@ import { c as createServerFn, i as TSS_SERVER_FUNCTION } from "./createServerFn-
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
 import { a as unknownType, i as stringType, n as objectType, r as recordType } from "../_libs/zod.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-CxFNRWjt.js
+//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-BGGYc72d.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var DEFAULT_CONFIG = {
@@ -1220,19 +1220,14 @@ function saveAnalytics(state) {
 }
 async function syncAnalyticsToSupabase(state, config) {
 	try {
-		return (await fetch(`${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/${CLOUD_ANALYTICS_TABLE}?on_conflict=id`, {
+		return (await fetch(`${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/rpc/upsert_funnel_analytics`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				Prefer: "resolution=merge-duplicates,return=minimal",
 				apikey: config.admin.supabaseAnonKey,
 				Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`
 			},
-			body: JSON.stringify([{
-				id: 1,
-				data: state,
-				updated_at: (/* @__PURE__ */ new Date()).toISOString()
-			}])
+			body: JSON.stringify({ p_data: state })
 		})).ok;
 	} catch {
 		return false;
