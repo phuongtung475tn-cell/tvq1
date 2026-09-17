@@ -124,26 +124,17 @@ const inputClass =
   "w-full rounded-xl border border-input bg-background px-4 py-3.5 text-base outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30";
 
 /** Rate limiting: giới hạn số lần gửi trong 1 cửa sổ thời gian / trình duyệt (cấu hình trong Admin). */
-const RATE_KEY = "lp_rate";
+let rateStamps: number[] = [];
 
 function rateLimited(maxCount: number, windowMin: number): boolean {
   if (typeof window === "undefined") return false;
   const now = Date.now();
   const windowMs = Math.max(1, windowMin) * 60 * 1000;
-  let stamps: number[] = [];
-  try {
-    stamps = JSON.parse(localStorage.getItem(RATE_KEY) || "[]");
-  } catch {
-    stamps = [];
-  }
+  let stamps = rateStamps;
   stamps = stamps.filter((t) => now - t < windowMs);
   if (stamps.length >= Math.max(1, maxCount)) return true;
   stamps.push(now);
-  try {
-    localStorage.setItem(RATE_KEY, JSON.stringify(stamps));
-  } catch {
-    /* ignore quota */
-  }
+  rateStamps = stamps;
   return false;
 }
 
@@ -255,7 +246,7 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
       const sessionSource = utmSource();
       // Hub UTM: dữ liệu attribution sạch, luôn an toàn (không throw)
       const utmData = getUtmPayload("last");
-      const trackedSource = utmData.utm_source || sessionSource || "direct";
+      const trackedSource = utmData["utm_source"] || sessionSource || "direct";
       const variant = getVariant(config.abTest.enabled, config.abTest.split);
       const { behavior, assessment, visitorBehaviorPayload } =
         buildVisitorBehaviorPayload(
@@ -288,9 +279,9 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
         risk_reasons: assessment.reasons,
         recommended_action: assessment.recommendedAction,
         utm_source: source,
-        utm_medium: utmData.utm_medium || behavior.utm_medium,
-        utm_campaign: utmData.utm_campaign || behavior.utm_campaign,
-        utm_content: utmData.utm_content || behavior.utm_content,
+        utm_medium: utmData["utm_medium"] || behavior.utm_medium,
+        utm_campaign: utmData["utm_campaign"] || behavior.utm_campaign,
+        utm_content: utmData["utm_content"] || behavior.utm_content,
         utm_term: behavior.utm_term || utmData["utm_term"] || "",
         ttclid: behavior.ttclid || utmData["ttclid"] || "",
         fbclid: utmData["fbclid"] || "",
@@ -298,7 +289,7 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
         referrer: utmData["referrer"] || "",
         attribution_model: utmData["attribution_model"] || "last",
         attribution_detected_by: utmData["attribution_detected_by"] || "",
-        raw_query: utmData.raw_query || "",
+        raw_query: utmData["raw_query"] || "",
         utm_params: utmData,
         visits_today: behavior.visits_today,
         visits_month: behavior.visits_month,
@@ -351,7 +342,7 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
         fbclid: payload.fbclid,
         ttclid: payload.ttclid,
         gclid: payload.gclid,
-        rawQuery: utmData.raw_query,
+        rawQuery: utmData["raw_query"],
         referrer: payload.referrer,
         attributionModel: payload.attribution_model,
         attributionDetectedBy: payload.attribution_detected_by,

@@ -163,7 +163,7 @@ async function handleBackupRequest(request) {
 }
 var serverEntryPromise;
 async function getServerEntry() {
-	if (!serverEntryPromise) serverEntryPromise = import("./server-DZV__67O.mjs").then((m) => m.default ?? m);
+	if (!serverEntryPromise) serverEntryPromise = import("./server-Cw2u7sOz.mjs").then((m) => m.default ?? m);
 	return serverEntryPromise;
 }
 async function normalizeCatastrophicSsrResponse(response) {
@@ -188,7 +188,17 @@ function isH3SwallowedErrorBody(body) {
 var server_default = { async fetch(request, env, ctx) {
 	try {
 		if (isBackupRequest(request)) return await handleBackupRequest(request);
-		return await normalizeCatastrophicSsrResponse(await (await getServerEntry()).fetch(request, env, ctx));
+		const normalized = await normalizeCatastrophicSsrResponse(await (await getServerEntry()).fetch(request, env, ctx));
+		const headers = new Headers(normalized.headers);
+		headers.set("Cache-Control", "no-store, max-age=0");
+		headers.set("Pragma", "no-cache");
+		headers.set("X-Content-Type-Options", "nosniff");
+		headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+		return new Response(normalized.body, {
+			status: normalized.status,
+			statusText: normalized.statusText,
+			headers
+		});
 	} catch (error) {
 		console.error(error);
 		return new Response(renderErrorPage(), {

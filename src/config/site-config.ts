@@ -16,6 +16,7 @@ export interface AdminConfig {
   storageMode: StorageMode;
   supabaseUrl: string;
   supabaseAnonKey: string;
+  supabaseAdminEmail: string;
   backupEmail: string;
   cronSchedule: string; // "daily" | "weekly" | "off"
   backupCronToken: string;
@@ -268,10 +269,11 @@ export interface SiteConfig {
 export const DEFAULT_CONFIG: SiteConfig = {
   admin: {
     adminPath: "admin",
-    password: "duhoc2026",
-    storageMode: "local",
+    password: "",
+    storageMode: "database",
     supabaseUrl: "",
     supabaseAnonKey: "",
+    supabaseAdminEmail: "",
     backupEmail: "",
     cronSchedule: "off",
     backupCronToken: "",

@@ -21,6 +21,7 @@ const SUBMISSION_KEY = "lp_submission_counters_v2";
 const SESSION_MARKER_KEY = "lp_session_marker_v2";
 const VISITOR_SESSION_TABLE = "visitor_sessions";
 const NETWORK_TIMEOUT_MS = 3500;
+const runtimeStorage = new Map<string, unknown>();
 
 export interface VisitorTrackingInitOptions {
   storageMode?: TrackingStorageMode;
@@ -145,39 +146,22 @@ function emit() {
 
 function readJSON<T>(key: string, fallback: T): T {
   if (!isBrowser()) return fallback;
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
+  return (runtimeStorage.get(key) as T | undefined) ?? fallback;
 }
 
 function writeJSON(key: string, value: unknown) {
   if (!isBrowser()) return;
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* ignore quota */
-  }
+  runtimeStorage.set(key, value);
 }
 
 function readSessionMarker() {
   if (!isBrowser()) return "";
-  try {
-    return window.sessionStorage.getItem(SESSION_MARKER_KEY) || "";
-  } catch {
-    return "";
-  }
+  return String(runtimeStorage.get(SESSION_MARKER_KEY) || "");
 }
 
 function writeSessionMarker(value: string) {
   if (!isBrowser()) return;
-  try {
-    window.sessionStorage.setItem(SESSION_MARKER_KEY, value);
-  } catch {
-    /* ignore */
-  }
+  runtimeStorage.set(SESSION_MARKER_KEY, value);
 }
 
 function makeId(prefix: string) {
@@ -427,15 +411,11 @@ function detectHeadlessBrowser() {
 
 function getVisitorId() {
   if (!isBrowser()) return "visitor-ssr";
-  try {
-    const stored = window.localStorage.getItem(VISITOR_ID_KEY);
-    if (stored) return stored;
-    const next = makeId("visitor");
-    window.localStorage.setItem(VISITOR_ID_KEY, next);
-    return next;
-  } catch {
-    return makeId("visitor");
-  }
+  const stored = runtimeStorage.get(VISITOR_ID_KEY);
+  if (typeof stored === "string" && stored) return stored;
+  const next = makeId("visitor");
+  runtimeStorage.set(VISITOR_ID_KEY, next);
+  return next;
 }
 
 /**

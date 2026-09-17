@@ -2,15 +2,15 @@ import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-hZzAbtud.
 import { g as Link } from "../_libs/@tanstack/react-router+[...].mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { S as useSiteConfig, b as trackConversion, d as isDuplicateLead, f as isDuplicateLeadRemote, h as loadLeads, r as LEAD_CREATED_EVENT, v as saveLead } from "./use-site-config-DOhv-5qs.mjs";
+import { E as useSiteConfig, m as isDuplicateLeadRemote, p as isDuplicateLead, r as LEAD_CREATED_EVENT, v as loadLeads, w as trackConversion, x as saveLead } from "./use-site-config-CCuN-Fru.mjs";
 import { E as GraduationCap, L as CalendarDays, P as Clock, g as MousePointerClick, n as Users, p as Phone, t as X, v as MessageCircle, y as Menu } from "../_libs/lucide-react.mjs";
-import { n as ScarcityBar, t as ContentSection } from "./ContentSection--qi-6Kti.mjs";
+import { n as ScarcityBar, t as ContentSection } from "./ContentSection-BdkW5hDo.mjs";
 import { a as DialogOverlay, c as DialogTrigger, i as DialogDescription, n as DialogClose, o as DialogPortal, r as DialogContent, s as DialogTitle, t as Dialog } from "../_libs/@radix-ui/react-dialog+[...].mjs";
-import { a as getUtm, f as trackFormStart, h as utmSource, l as sendLeadEmail, m as trackLead, o as getUtmPayload, r as dispatchLead, s as getVariant } from "./ab-CjZgG4e6.mjs";
+import { a as getUtm, f as trackFormStart, h as utmSource, l as sendLeadEmail, m as trackLead, o as getUtmPayload, r as dispatchLead, s as getVariant } from "./ab-CzJmWlKk.mjs";
 import { n as toast, t as Toaster } from "../_libs/sonner.mjs";
 import { n as clsx, t as cva } from "../_libs/class-variance-authority+clsx.mjs";
 import { t as twMerge } from "../_libs/tailwind-merge.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-zs6AdtTN.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-BAIswJxu.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var expert_1_default = "/assets/expert-1-CcX0y7YN.webp";
@@ -22,6 +22,7 @@ var SUBMISSION_KEY = "lp_submission_counters_v2";
 var SESSION_MARKER_KEY = "lp_session_marker_v2";
 var VISITOR_SESSION_TABLE = "visitor_sessions";
 var NETWORK_TIMEOUT_MS = 3500;
+var runtimeStorage = /* @__PURE__ */ new Map();
 var defaultDevice = {
 	userAgent: "",
 	manufacturer: "Unknown",
@@ -106,32 +107,19 @@ function emit() {
 }
 function readJSON(key, fallback) {
 	if (!isBrowser()) return fallback;
-	try {
-		const raw = window.localStorage.getItem(key);
-		return raw ? JSON.parse(raw) : fallback;
-	} catch {
-		return fallback;
-	}
+	return runtimeStorage.get(key) ?? fallback;
 }
 function writeJSON(key, value) {
 	if (!isBrowser()) return;
-	try {
-		window.localStorage.setItem(key, JSON.stringify(value));
-	} catch {}
+	runtimeStorage.set(key, value);
 }
 function readSessionMarker() {
 	if (!isBrowser()) return "";
-	try {
-		return window.sessionStorage.getItem(SESSION_MARKER_KEY) || "";
-	} catch {
-		return "";
-	}
+	return String(runtimeStorage.get(SESSION_MARKER_KEY) || "");
 }
 function writeSessionMarker(value) {
 	if (!isBrowser()) return;
-	try {
-		window.sessionStorage.setItem(SESSION_MARKER_KEY, value);
-	} catch {}
+	runtimeStorage.set(SESSION_MARKER_KEY, value);
 }
 function makeId(prefix) {
 	if (!isBrowser()) return `${prefix}-ssr`;
@@ -349,15 +337,11 @@ function detectHeadlessBrowser() {
 }
 function getVisitorId() {
 	if (!isBrowser()) return "visitor-ssr";
-	try {
-		const stored = window.localStorage.getItem(VISITOR_ID_KEY);
-		if (stored) return stored;
-		const next = makeId("visitor");
-		window.localStorage.setItem(VISITOR_ID_KEY, next);
-		return next;
-	} catch {
-		return makeId("visitor");
-	}
+	const stored = runtimeStorage.get(VISITOR_ID_KEY);
+	if (typeof stored === "string" && stored) return stored;
+	const next = makeId("visitor");
+	runtimeStorage.set(VISITOR_ID_KEY, next);
+	return next;
 }
 /**
 * Attribution lấy từ Hub UTM (src/lib/utm-hub.ts) — nơi duy nhất đọc URL,
@@ -1119,23 +1103,16 @@ var EMPTY = {
 };
 var inputClass = "w-full rounded-xl border border-input bg-background px-4 py-3.5 text-base outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30";
 /** Rate limiting: giới hạn số lần gửi trong 1 cửa sổ thời gian / trình duyệt (cấu hình trong Admin). */
-var RATE_KEY = "lp_rate";
+var rateStamps = [];
 function rateLimited(maxCount, windowMin) {
 	if (typeof window === "undefined") return false;
 	const now = Date.now();
 	const windowMs = Math.max(1, windowMin) * 60 * 1e3;
-	let stamps = [];
-	try {
-		stamps = JSON.parse(localStorage.getItem(RATE_KEY) || "[]");
-	} catch {
-		stamps = [];
-	}
+	let stamps = rateStamps;
 	stamps = stamps.filter((t) => now - t < windowMs);
 	if (stamps.length >= Math.max(1, maxCount)) return true;
 	stamps.push(now);
-	try {
-		localStorage.setItem(RATE_KEY, JSON.stringify(stamps));
-	} catch {}
+	rateStamps = stamps;
 	return false;
 }
 function LeadForm({ id = "dang-ky" }) {
@@ -1219,7 +1196,7 @@ function LeadForm({ id = "dang-ky" }) {
 			});
 			const sessionSource = utmSource();
 			const utmData = getUtmPayload("last");
-			const trackedSource = utmData.utm_source || sessionSource || "direct";
+			const trackedSource = utmData["utm_source"] || sessionSource || "direct";
 			const variant = getVariant(config.abTest.enabled, config.abTest.split);
 			const { behavior, assessment, visitorBehaviorPayload } = buildVisitorBehaviorPayload({
 				city: form.province,
@@ -1243,9 +1220,9 @@ function LeadForm({ id = "dang-ky" }) {
 				risk_reasons: assessment.reasons,
 				recommended_action: assessment.recommendedAction,
 				utm_source: source,
-				utm_medium: utmData.utm_medium || behavior.utm_medium,
-				utm_campaign: utmData.utm_campaign || behavior.utm_campaign,
-				utm_content: utmData.utm_content || behavior.utm_content,
+				utm_medium: utmData["utm_medium"] || behavior.utm_medium,
+				utm_campaign: utmData["utm_campaign"] || behavior.utm_campaign,
+				utm_content: utmData["utm_content"] || behavior.utm_content,
 				utm_term: behavior.utm_term || utmData["utm_term"] || "",
 				ttclid: behavior.ttclid || utmData["ttclid"] || "",
 				fbclid: utmData["fbclid"] || "",
@@ -1253,7 +1230,7 @@ function LeadForm({ id = "dang-ky" }) {
 				referrer: utmData["referrer"] || "",
 				attribution_model: utmData["attribution_model"] || "last",
 				attribution_detected_by: utmData["attribution_detected_by"] || "",
-				raw_query: utmData.raw_query || "",
+				raw_query: utmData["raw_query"] || "",
 				utm_params: utmData,
 				visits_today: behavior.visits_today,
 				visits_month: behavior.visits_month,
@@ -1301,7 +1278,7 @@ function LeadForm({ id = "dang-ky" }) {
 				fbclid: payload.fbclid,
 				ttclid: payload.ttclid,
 				gclid: payload.gclid,
-				rawQuery: utmData.raw_query,
+				rawQuery: utmData["raw_query"],
 				referrer: payload.referrer,
 				attributionModel: payload.attribution_model,
 				attributionDetectedBy: payload.attribution_detected_by,

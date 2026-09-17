@@ -32,7 +32,7 @@ function compactPayload(payload: Record<string, unknown>) {
     return payload;
   }
   const compact = { ...payload };
-  delete compact.visitor_behavior_payload;
+  delete compact["visitor_behavior_payload"];
   return compact;
 }
 

@@ -2,13 +2,13 @@ import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-hZzAbtud.
 import { c as HeadContent, d as createRouter, f as Outlet, g as Link, h as createRootRouteWithContext, l as useRouterState, m as createFileRoute, p as lazyRouteComponent, s as Scripts, v as useRouter } from "../_libs/@tanstack/react-router+[...].mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { S as useSiteConfig, a as clearAnalytics, c as exportConfigFile, g as migrateLocalDataToSupabase, h as loadLeads, i as SiteConfigProvider, l as exportLeadsCsv, m as loadCloudAnalytics, n as DEFAULT_CONFIG, o as clearLeads, p as loadAnalytics, r as LEAD_CREATED_EVENT, t as ANALYTICS_UPDATED_EVENT, u as exportSupabaseSql, v as saveLead, x as trackVisit, y as testSupabaseConnection } from "./use-site-config-DOhv-5qs.mjs";
-import { n as useAdmin, t as AdminProvider } from "./use-admin-D0sSGca6.mjs";
+import { C as testSupabaseConnection, E as useSiteConfig, T as trackVisit, _ as loadCloudLeads, a as clearAnalytics, d as exportSupabaseSql, g as loadCloudAnalytics, h as loadAnalytics, i as SiteConfigProvider, l as exportConfigFile, n as DEFAULT_CONFIG, o as clearLeads, r as LEAD_CREATED_EVENT, t as ANALYTICS_UPDATED_EVENT, u as exportLeadsCsv, v as loadLeads, x as saveLead, y as migrateLocalDataToSupabase } from "./use-site-config-CCuN-Fru.mjs";
+import { n as useAdmin, t as AdminProvider } from "./use-admin-B9NKVHad.mjs";
 import { A as EyeOff, D as Globe, E as GraduationCap, F as ClipboardList, I as ChartColumn, M as Database, N as CloudUpload, O as FileText, P as Clock, R as BookOpen, S as LogOut, T as KeyRound, _ as Monitor, a as Tablet, b as Megaphone, c as Smartphone, d as Save, f as Plus, h as Palette, i as Target, j as Download, k as Eye, l as Settings2, m as Pencil, o as SquareSplitHorizontal, p as Phone, r as Trash2, s as Sparkles, t as X, u as Search, w as Link2, x as Mail, z as Bell } from "../_libs/lucide-react.mjs";
-import { c as resetVariant, d as testWebhookEndpoint, g as webhookConfigurationWarning, h as utmSource, i as fireTestEvent, n as checkEmailConfig, o as getUtmPayload, p as trackInteraction, s as getVariant, t as captureUtm, u as sendTestEmail } from "./ab-CjZgG4e6.mjs";
+import { c as resetVariant, d as testWebhookEndpoint, g as webhookConfigurationWarning, h as utmSource, i as fireTestEvent, n as checkEmailConfig, o as getUtmPayload, p as trackInteraction, s as getVariant, t as captureUtm, u as sendTestEmail } from "./ab-CzJmWlKk.mjs";
 import { t as QueryClientProvider } from "../_libs/tanstack__react-query.mjs";
 import { t as QueryClient } from "../_libs/tanstack__query-core.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-ptWnxuYA.js
+//#region node_modules/.nitro/vite/services/ssr/assets/router-FYdgXi3D.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var styles_default = "/assets/styles-DfEa8-_U.css";
@@ -1783,7 +1783,10 @@ function LeadsModal({ onClose }) {
 	const [leads, setLeads] = (0, import_react.useState)([]);
 	const [q, setQ] = (0, import_react.useState)("");
 	(0, import_react.useEffect)(() => {
-		const refresh = () => setLeads(loadLeads());
+		const refresh = () => {
+			if (config.admin.storageMode === "database") loadCloudLeads(config).then(setLeads);
+			else setLeads(loadLeads());
+		};
 		refresh();
 		window.addEventListener(LEAD_CREATED_EVENT, refresh);
 		window.addEventListener("storage", refresh);
@@ -1791,7 +1794,7 @@ function LeadsModal({ onClose }) {
 			window.removeEventListener(LEAD_CREATED_EVENT, refresh);
 			window.removeEventListener("storage", refresh);
 		};
-	}, []);
+	}, [config]);
 	const cloud = config.admin.storageMode === "database" && !!config.admin.supabaseUrl;
 	const key = q.trim().toLowerCase();
 	const filtered = key ? leads.filter((l) => [
@@ -1814,7 +1817,8 @@ function LeadsModal({ onClose }) {
 			aiRank: "WARM",
 			utmSource: "test"
 		}, config);
-		setLeads(loadLeads());
+		if (config.admin.storageMode === "database") setLeads(await loadCloudLeads(config));
+		else setLeads(loadLeads());
 	};
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(AdminModal, {
 		title: "Quản Lý Lead (Mini-CRM)",
@@ -1978,7 +1982,7 @@ function StorageModal({ onClose }) {
 	const [migrating, setMigrating] = (0, import_react.useState)(false);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(AdminModal, {
 		title: "Storage Mode",
-		subtitle: "Local (mặc định) hoặc Supabase Cloud",
+		subtitle: "Kết nối Supabase và xác thực quản trị",
 		onClose,
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
@@ -2003,8 +2007,21 @@ function StorageModal({ onClose }) {
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 					label: "Supabase Anon Key",
 					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+						type: "password",
+						autoComplete: "off",
 						value: a.supabaseAnonKey,
 						onChange: (e) => update((d) => d.admin.supabaseAnonKey = e.target.value)
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+					label: "Email tài khoản Supabase Auth",
+					hint: "Tài khoản này phải tồn tại trong Supabase → Authentication → Users.",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+						type: "email",
+						autoComplete: "email",
+						placeholder: "admin@example.com",
+						value: a.supabaseAdminEmail,
+						onChange: (e) => update((d) => d.admin.supabaseAdminEmail = e.target.value)
 					})
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
@@ -2027,7 +2044,7 @@ function StorageModal({ onClose }) {
 						setMigration(null);
 						try {
 							const result = await migrateLocalDataToSupabase(config);
-							setMigration(`Config: ${result.configSynced ? "đã đồng bộ" : "lỗi"}; Analytics: ${result.analyticsSynced ? "đã đồng bộ" : "lỗi"}; lead tải lên: ${result.leadsUploaded}; đã có trên cloud: ${result.leadsSkipped}; lỗi: ${result.leadsFailed}. Dữ liệu LocalStorage vẫn được giữ lại.`);
+							setMigration(`Config: ${result.configSynced ? "đã đồng bộ" : "lỗi"}; Analytics: ${result.analyticsSynced ? "đã đồng bộ" : "lỗi"}; lead tải lên: ${result.leadsUploaded}; đã có trên cloud: ${result.leadsSkipped}; lỗi: ${result.leadsFailed}. Dữ liệu local đã được dọn.`);
 						} catch {
 							setMigration("Đồng bộ thất bại. Kiểm tra RLS và schema Supabase.");
 						} finally {
@@ -4423,7 +4440,7 @@ function RootComponent() {
 		] }) })
 	});
 }
-var $$splitComponentImporter$2 = () => import("./routes-zs6AdtTN.mjs");
+var $$splitComponentImporter$2 = () => import("./routes-BAIswJxu.mjs");
 var TITLE = "Du Học Nghề Trung Quốc 0Đ | Vừa Học Vừa Làm Lương 15-30 Triệu";
 var DESC = "Du học nghề Trung Quốc học phí 0Đ: học 20% lý thuyết - 80% thực hành, lương cứng 15-30 triệu/tháng, bằng Cao đẳng chính quy quốc tế. Đăng ký nhận lộ trình miễn phí.";
 var FAQ_JSONLD = JSON.stringify({
@@ -4501,9 +4518,9 @@ var Route$2 = createFileRoute("/")({
 	}),
 	component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-var $$splitComponentImporter$1 = () => import("../_-B6s3vhEm.mjs");
+var $$splitComponentImporter$1 = () => import("../_-BanaLm9X.mjs");
 var Route$1 = createFileRoute("/$")({ component: lazyRouteComponent($$splitComponentImporter$1, "component") });
-var $$splitComponentImporter = () => import("./admin-UMQFOMcm.mjs");
+var $$splitComponentImporter = () => import("./admin-D8uhUTop.mjs");
 var Route = createFileRoute("/admin")({ component: lazyRouteComponent($$splitComponentImporter, "component") });
 var rootRouteChildren = {
 	IndexRoute: Route$2.update({

@@ -1,5 +1,5 @@
 import { Lock } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useAdmin } from "@/lib/use-admin";
 import { useSiteConfig } from "@/lib/use-site-config";
@@ -9,12 +9,25 @@ export function AdminLoginPage() {
   const { authed, login } = useAdmin();
   const { config, ready: configReady } = useSiteConfig();
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(config.admin.supabaseAdminEmail);
   const [error, setError] = useState(false);
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
-  function handleSubmit() {
+  useEffect(() => {
+    setEmail(config.admin.supabaseAdminEmail);
+  }, [config.admin.supabaseAdminEmail]);
+
+  async function handleSubmit() {
     const nextPassword = passwordInputRef.current?.value ?? password;
-    if (login(nextPassword, config.admin.password)) {
+    if (
+      await login(
+        nextPassword,
+        config.admin.password,
+        config.admin.supabaseUrl,
+        config.admin.supabaseAnonKey,
+        email,
+      )
+    ) {
       window.location.assign("/");
     } else {
       setError(true);
@@ -46,6 +59,19 @@ export function AdminLoginPage() {
           </div>
         ) : (
           <div className="space-y-3">
+            {config.admin.storageMode === "database" && (
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError(false);
+                }}
+                placeholder="Email Supabase Auth"
+                autoComplete="username"
+                className="w-full rounded-lg bg-neutral-800 px-3 py-2.5 text-sm outline-none ring-1 ring-white/10 focus:ring-white/30"
+              />
+            )}
             <input
               ref={passwordInputRef}
               type="password"

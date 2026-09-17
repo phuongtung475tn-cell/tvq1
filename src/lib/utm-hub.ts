@@ -44,6 +44,7 @@ const FIRST_TOUCH_KEY = "lp_utm_first_v4";
 const LAST_TOUCH_KEY = "lp_utm_last_v4";
 /** Khoá cũ — vẫn đọc để không mất dữ liệu khách đã ghé trước đây */
 const LEGACY_KEYS = ["lp_utm_first_v3", "lp_utm_v2"];
+const memoryStore = new Map<string, UtmRecord>();
 
 export const UNKNOWN_SOURCE = "unknown_inapp_or_referral";
 
@@ -64,7 +65,11 @@ const PARAM_PATTERNS: Array<{
   source: string;
   medium: string;
 }> = [
-  { test: /^(gclid|gbraid|wbraid|gad|gclsrc|s_kwcid)/i, source: "google", medium: "cpc" },
+  {
+    test: /^(gclid|gbraid|wbraid|gad|gclsrc|s_kwcid)/i,
+    source: "google",
+    medium: "cpc",
+  },
   { test: /^dclid/i, source: "google", medium: "display" },
   { test: /^msclkid/i, source: "bing", medium: "cpc" },
   { test: /^(fbclid|fb_|fbadid|fb$)/i, source: "facebook", medium: "social" },
@@ -162,7 +167,8 @@ const PLACEHOLDER_VALUES = new Set([
 ]);
 
 /** Tham số điều hướng nội bộ — không coi là tín hiệu nguồn */
-const IGNORED_PARAMS = /^(page|p|q|search|tab|id|sort|filter|lang|locale|_rsc)$/i;
+const IGNORED_PARAMS =
+  /^(page|p|q|search|tab|id|sort|filter|lang|locale|_rsc)$/i;
 
 function isBrowser() {
   return typeof window !== "undefined";
@@ -181,35 +187,14 @@ function clean(value: string | null | undefined) {
   return isMeaningful(trimmed) ? trimmed : "";
 }
 
-function getStore(kind: "local" | "session") {
-  return kind === "local" ? window.localStorage : window.sessionStorage;
-}
-
 function safeRead(kind: "local" | "session", key: string): UtmRecord | null {
   if (!isBrowser()) return null;
-  try {
-    const raw = getStore(kind).getItem(key);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<UtmRecord>;
-    if (!parsed || typeof parsed !== "object") return null;
-    return {
-      ...EMPTY_RECORD,
-      ...parsed,
-      params: (parsed.params as Record<string, string>) || {},
-      click_ids: (parsed.click_ids as Record<string, string>) || {},
-    };
-  } catch {
-    return null;
-  }
+  return memoryStore.get(`${kind}:${key}`) || null;
 }
 
 function safeWrite(kind: "local" | "session", key: string, value: UtmRecord) {
   if (!isBrowser()) return;
-  try {
-    getStore(kind).setItem(key, JSON.stringify(value));
-  } catch {
-    /* quota / private mode — bỏ qua */
-  }
+  memoryStore.set(`${kind}:${key}`, value);
 }
 
 export function detectReferrerSource(referrer: string): string {
@@ -266,7 +251,9 @@ export function collectAllQueryParams(): {
           const name = String(key).trim().slice(0, 100);
           if (!name) return;
           if (name in params) return;
-          params[name] = String(value ?? "").trim().slice(0, 500);
+          params[name] = String(value ?? "")
+            .trim()
+            .slice(0, 500);
         });
       } catch {
         /* query dị dạng — thử tách thủ công */
@@ -314,7 +301,11 @@ export function parseCurrentUrl(): UtmRecord {
     const lowerMap: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       lowerMap[key.toLowerCase()] = value;
-      if (!/^utm_/i.test(key) && !IGNORED_PARAMS.test(key) && value !== undefined) {
+      if (
+        !/^utm_/i.test(key) &&
+        !IGNORED_PARAMS.test(key) &&
+        value !== undefined
+      ) {
         record.click_ids[key] = value;
       }
     }
@@ -433,8 +424,8 @@ let cached: { first: UtmRecord; last: UtmRecord } | null = null;
 function hasSignal(record: UtmRecord) {
   return Boolean(
     record.utm_source ||
-      record.utm_campaign ||
-      Object.keys(record.click_ids).length > 0,
+    record.utm_campaign ||
+    Object.keys(record.click_ids).length > 0,
   );
 }
 
@@ -442,7 +433,10 @@ function hasSignal(record: UtmRecord) {
  * Đọc URL, thu gom, lưu first-touch (localStorage) + last-touch (sessionStorage).
  * Gọi bao nhiêu lần cũng an toàn.
  */
-export function captureUtm(force = false): { first: UtmRecord; last: UtmRecord } {
+export function captureUtm(force = false): {
+  first: UtmRecord;
+  last: UtmRecord;
+} {
   const blank = () => ({
     first: { ...EMPTY_RECORD, params: {}, click_ids: {} },
     last: { ...EMPTY_RECORD, params: {}, click_ids: {} },
@@ -467,7 +461,8 @@ export function captureUtm(force = false): { first: UtmRecord; last: UtmRecord }
       : current;
 
     // Last-touch: chỉ cập nhật khi lần tải này thật sự có tham số mới
-    const newSignal = Object.keys(current.click_ids).length > 0 || !!current.raw_query;
+    const newSignal =
+      Object.keys(current.click_ids).length > 0 || !!current.raw_query;
     const last = newSignal
       ? merge(storedLast, current)
       : storedLast && storedLast.utm_source

@@ -3,16 +3,17 @@ import { c as createServerFn, i as TSS_SERVER_FUNCTION } from "./createServerFn-
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
 import { a as unknownType, i as stringType, n as objectType, r as recordType } from "../_libs/zod.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-DOhv-5qs.js
+//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-CCuN-Fru.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var DEFAULT_CONFIG = {
 	admin: {
 		adminPath: "admin",
-		password: "duhoc2026",
-		storageMode: "local",
+		password: "",
+		storageMode: "database",
 		supabaseUrl: "",
 		supabaseAnonKey: "",
+		supabaseAdminEmail: "",
 		backupEmail: "",
 		cronSchedule: "off",
 		backupCronToken: ""
@@ -546,11 +547,52 @@ var relaySchema = objectType({
 	headers: recordType(stringType(), stringType()).optional()
 });
 var relayWebhook = createServerFn({ method: "POST" }).validator((data) => relaySchema.parse(data)).handler(createSsrRpc("95e6712f6ffd450a883eaa218493fa3addd9c46fc4e357a506533ee0a8508e68"));
+var ACCESS_TOKEN_KEY = "funnel_supabase_access_token_v1";
+function isBrowser$1() {
+	return typeof window !== "undefined";
+}
+function getSupabaseAccessToken() {
+	if (!isBrowser$1()) return "";
+	try {
+		return window.sessionStorage.getItem(ACCESS_TOKEN_KEY) || "";
+	} catch {
+		return "";
+	}
+}
+function clearSupabaseAccessToken() {
+	if (!isBrowser$1()) return;
+	try {
+		window.sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+	} catch {}
+}
+async function signInWithSupabase(url, anonKey, email, password) {
+	if (!url || !anonKey || !email || !password || !isBrowser$1()) return false;
+	try {
+		const response = await fetch(`${url.replace(/\/$/, "")}/auth/v1/token?grant_type=password`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				apikey: anonKey
+			},
+			body: JSON.stringify({
+				email,
+				password
+			})
+		});
+		if (!response.ok) return false;
+		const payload = await response.json();
+		if (typeof payload.access_token !== "string" || !payload.access_token) return false;
+		window.sessionStorage.setItem(ACCESS_TOKEN_KEY, payload.access_token);
+		return true;
+	} catch {
+		return false;
+	}
+}
 /**
 * HYBRID STORAGE ADAPTER
 * ----------------------
-* - LOCAL MODE (mặc định): đọc/ghi cấu hình qua localStorage, không cần DB.
-* - DATABASE MODE: đồng bộ qua Supabase REST (khi Admin cấu hình URL + anon key).
+* - LOCAL MODE: đọc/ghi cấu hình qua localStorage, chỉ dành cho phát triển.
+* - DATABASE MODE: dữ liệu nghiệp vụ và cấu hình chỉ nằm trên Supabase.
 *
 * Toàn bộ hệ thống chỉ gọi qua adapter này nên có thể đổi backend mà không sửa UI.
 */
@@ -565,6 +607,56 @@ var CLOUD_ANALYTICS_TABLE = "funnel_analytics";
 var LOCAL_MIGRATION_KEY = "funnel_supabase_migrated_leads_v1";
 var REMOTE_LEAD_TIMEOUT_MS = 3e3;
 var REMOTE_DUPLICATE_TIMEOUT_MS = 1500;
+function bearer(key) {
+	return getSupabaseAccessToken() || key;
+}
+var browserCacheKeys = [
+	...[
+		CONFIG_KEY,
+		LEADS_KEY,
+		ANALYTICS_KEY,
+		BACKUP_KEY,
+		LOCAL_MIGRATION_KEY
+	],
+	"lp_visitor_id_v2",
+	"lp_utm_first_v4",
+	"lp_utm_last_v4",
+	"lp_utm_first_v3",
+	"lp_utm_v2",
+	"lp_visit_counters_v2",
+	"lp_submission_counters_v2",
+	"lp_rate",
+	"funnel_ab_variant_v2_A",
+	"funnel_ab_variant_v2_B"
+];
+function configuredSupabase() {
+	const env = {
+		"BASE_URL": "/",
+		"DEV": false,
+		"MODE": "production",
+		"PROD": true,
+		"SSR": true,
+		"TSS_DEV_SERVER": "false",
+		"TSS_DEV_SSR_STYLES_BASEPATH": "/",
+		"TSS_DEV_SSR_STYLES_ENABLED": "true",
+		"TSS_DISABLE_CSRF_MIDDLEWARE_WARNING": "false",
+		"TSS_INLINE_CSS_ENABLED": "false",
+		"TSS_ROUTER_BASEPATH": "",
+		"TSS_SERVER_FN_BASE": "/_serverFn/"
+	};
+	return {
+		url: env["VITE_SUPABASE_URL"]?.trim().replace(/\/$/, "") || "",
+		key: env["VITE_SUPABASE_ANON_KEY"]?.trim() || ""
+	};
+}
+function clearClientCache() {
+	if (!isBrowser()) return;
+	for (const key of browserCacheKeys) try {
+		window.localStorage.removeItem(key);
+		window.sessionStorage.removeItem(key);
+	} catch {}
+	if ("caches" in window) window.caches.keys().then((keys) => Promise.all(keys.map((key) => window.caches.delete(key))));
+}
 function isRecord(value) {
 	return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
@@ -594,9 +686,12 @@ function isBrowser() {
 	return typeof window !== "undefined";
 }
 function preserveLocalSecrets(merged, local) {
-	merged.admin.supabaseUrl = local.admin.supabaseUrl;
-	merged.admin.supabaseAnonKey = local.admin.supabaseAnonKey;
-	merged.admin.storageMode = local.admin.storageMode;
+	const env = configuredSupabase();
+	merged.admin.supabaseUrl = env.url || local.admin.supabaseUrl;
+	merged.admin.supabaseAnonKey = env.key || local.admin.supabaseAnonKey;
+	merged.admin.supabaseAdminEmail = local.admin.supabaseAdminEmail;
+	merged.admin.password = "";
+	merged.admin.storageMode = "database";
 	merged.admin.backupCronToken = local.admin.backupCronToken;
 	merged.emailAutomation.resendApiKey = local.emailAutomation.resendApiKey;
 	merged.emailAutomation.gmailClientId = local.emailAutomation.gmailClientId;
@@ -610,7 +705,13 @@ function loadConfig() {
 	try {
 		const raw = window.localStorage.getItem(CONFIG_KEY);
 		const parsed = raw ? JSON.parse(raw) : null;
-		return mergeConfig(DEFAULT_CONFIG, isRecord(parsed) ? parsed : null);
+		const config = mergeConfig(DEFAULT_CONFIG, isRecord(parsed) ? parsed : null);
+		const env = configuredSupabase();
+		clearClientCache();
+		config.admin.storageMode = "database";
+		config.admin.supabaseUrl = env.url;
+		config.admin.supabaseAnonKey = env.key;
+		return config;
 	} catch {
 		return structuredClone(DEFAULT_CONFIG);
 	}
@@ -621,40 +722,36 @@ async function loadCloudConfig(config) {
 	try {
 		const response = await fetch(`${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/${CLOUD_CONFIG_TABLE}?id=eq.1&select=data`, { headers: {
 			apikey: config.admin.supabaseAnonKey,
-			Authorization: `Bearer ${config.admin.supabaseAnonKey}`
+			Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`
 		} });
 		if (!response.ok) return null;
 		const rows = await response.json();
 		if (!Array.isArray(rows) || !isRecord(rows[0])) return null;
 		const data = rows[0]["data"];
 		if (!isRecord(data)) return null;
-		return preserveLocalSecrets(mergeConfig(config, data), config);
+		const hydrated = preserveLocalSecrets(mergeConfig(config, data), config);
+		clearClientCache();
+		return hydrated;
 	} catch {
 		return null;
 	}
 }
 function saveConfig(config) {
 	if (!isBrowser()) return;
-	let localSaved = true;
-	try {
-		window.localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-	} catch {
-		localSaved = false;
-		console.warn("LocalStorage config save failed; continuing with Supabase sync.");
+	if (config.admin.storageMode !== "database") {
+		clearClientCache();
+		console.error("Local storage mode is disabled; configure Supabase first.");
+		return;
 	}
-	try {
-		const snaps = JSON.parse(window.localStorage.getItem(BACKUP_KEY) || "[]");
-		snaps.unshift({
-			at: (/* @__PURE__ */ new Date()).toISOString(),
-			config
-		});
-		window.localStorage.setItem(BACKUP_KEY, JSON.stringify(snaps.slice(0, 10)));
-	} catch {}
-	if (config.admin.storageMode === "database" && config.admin.supabaseUrl && config.admin.supabaseAnonKey) syncConfigToSupabase(config);
-	if (!localSaved && config.admin.storageMode !== "database") console.warn("Config is not persisted locally because Database Mode is disabled.");
+	if (config.admin.storageMode === "database") {
+		clearClientCache();
+		if (config.admin.supabaseUrl && config.admin.supabaseAnonKey) syncConfigToSupabase(config);
+		else console.error("Database mode requires VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
+		return;
+	}
 }
 function resetConfig() {
-	if (isBrowser()) window.localStorage.removeItem(CONFIG_KEY);
+	clearClientCache();
 	return structuredClone(DEFAULT_CONFIG);
 }
 function exportConfigFile(config) {
@@ -743,8 +840,47 @@ function parseImportedConfig(raw) {
 }
 function loadLeads() {
 	if (!isBrowser()) return [];
+	if (loadConfig().admin.storageMode === "database") return [];
 	try {
 		return JSON.parse(window.localStorage.getItem(LEADS_KEY) || "[]");
+	} catch {
+		return [];
+	}
+}
+async function loadCloudLeads(config) {
+	if (!isBrowser() || config.admin.storageMode !== "database" || !config.admin.supabaseUrl || !config.admin.supabaseAnonKey) return [];
+	try {
+		const response = await fetch(`${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/leads?select=*&order=created_at.desc&limit=500`, { headers: {
+			apikey: config.admin.supabaseAnonKey,
+			Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`
+		} });
+		if (!response.ok) return [];
+		return (await response.json()).map((row) => ({
+			id: String(row["id"] || ""),
+			at: String(row["created_at"] || ""),
+			name: String(row["name"] || ""),
+			phone: String(row["phone"] || ""),
+			email: String(row["email"] || ""),
+			city: String(row["city"] || ""),
+			major: String(row["major"] || ""),
+			aiScore: typeof row["ai_score"] === "number" ? row["ai_score"] : void 0,
+			aiRank: String(row["ai_rank"] || ""),
+			riskLevel: row["risk_level"],
+			riskReasons: row["risk_reasons"],
+			recommendedAction: String(row["recommended_action"] || ""),
+			behaviorSummary: String(row["behavior_summary"] || ""),
+			saleAdvice: String(row["sale_advice"] || ""),
+			currentSession: Number(row["current_session"] || 0),
+			visitsToday: Number(row["visits_today"] || 0),
+			visitsMonth: Number(row["visits_month"] || 0),
+			utmSource: String(row["utm_source"] || ""),
+			utmMedium: String(row["utm_medium"] || ""),
+			variant: String(row["variant"] || ""),
+			deviceModel: String(row["device_model"] || ""),
+			operatingSystem: String(row["operating_system"] || ""),
+			browser: String(row["browser"] || ""),
+			storage: "database"
+		}));
 	} catch {
 		return [];
 	}
@@ -760,6 +896,7 @@ function cacheLeadLocally(record) {
 }
 /** Trùng lặp: cùng số điện thoại đã gửi trong 24 giờ gần nhất. */
 function isDuplicateLead(phone) {
+	if (loadConfig().admin.storageMode === "database") return false;
 	const cutoff = Date.now() - 864e5;
 	return loadLeads().some((l) => l.phone === phone && new Date(l.at).getTime() > cutoff);
 }
@@ -775,7 +912,7 @@ async function isDuplicateLeadRemote(phone, config) {
 			const res = await fetch(url, {
 				headers: {
 					apikey: config.admin.supabaseAnonKey,
-					Authorization: `Bearer ${config.admin.supabaseAnonKey}`
+					Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`
 				},
 				signal: controller.signal
 			});
@@ -802,12 +939,12 @@ function clearLeads() {
 * ngay; ở Database Mode sẽ đẩy thêm lên bảng `leads` của Supabase.
 */
 async function saveLead(lead, config) {
-	const mode = config?.admin.storageMode === "database" && config.admin.supabaseUrl && config.admin.supabaseAnonKey ? "database" : "local";
+	const mode = config?.admin.storageMode === "database" ? "database" : "local";
 	const record = {
 		...lead,
 		storage: mode
 	};
-	cacheLeadLocally(record);
+	if (mode === "local") cacheLeadLocally(record);
 	if (mode === "database" && config) {
 		if (!await pushLeadToSupabase(record, config.admin.supabaseUrl, config.admin.supabaseAnonKey)) record.storage = "local";
 	}
@@ -821,7 +958,7 @@ async function pushLeadToSupabase(lead, url, key) {
 		const headers = {
 			"Content-Type": "application/json",
 			apikey: key,
-			Authorization: `Bearer ${key}`,
+			Authorization: `Bearer ${bearer(key)}`,
 			Prefer: "return=minimal"
 		};
 		const row = {
@@ -881,14 +1018,14 @@ async function pushLeadToSupabase(lead, url, key) {
 		});
 		if (!res.ok && res.status >= 400 && res.status < 500) {
 			const legacy = { ...row };
-			delete legacy.utm_term;
-			delete legacy.fbclid;
-			delete legacy.gclid;
-			delete legacy.raw_query;
-			delete legacy.referrer;
-			delete legacy.attribution_model;
-			delete legacy.attribution_detected_by;
-			delete legacy.utm_params;
+			delete legacy["utm_term"];
+			delete legacy["fbclid"];
+			delete legacy["gclid"];
+			delete legacy["raw_query"];
+			delete legacy["referrer"];
+			delete legacy["attribution_model"];
+			delete legacy["attribution_detected_by"];
+			delete legacy["utm_params"];
 			return (await fetch(endpoint, {
 				method: "POST",
 				headers,
@@ -950,6 +1087,7 @@ function exportLeadsCsv(leads) {
 	a.click();
 	URL.revokeObjectURL(url);
 }
+var cloudAnalyticsState = null;
 function emptyAnalytics() {
 	return {
 		visits: 0,
@@ -989,6 +1127,7 @@ function normalizeAnalytics(value) {
 }
 function loadAnalytics() {
 	if (!isBrowser()) return emptyAnalytics();
+	if (loadConfig().admin.storageMode === "database") return cloudAnalyticsState ? structuredClone(cloudAnalyticsState) : emptyAnalytics();
 	try {
 		return normalizeAnalytics(JSON.parse(window.localStorage.getItem(ANALYTICS_KEY) || "{}"));
 	} catch {
@@ -997,10 +1136,14 @@ function loadAnalytics() {
 }
 function saveAnalytics(state) {
 	if (!isBrowser()) return;
+	const config = loadConfig();
+	if (config.admin.storageMode === "database") {
+		window.dispatchEvent(new CustomEvent(ANALYTICS_UPDATED_EVENT, { detail: state }));
+		syncAnalyticsToSupabase(state, config);
+		return;
+	}
 	window.localStorage.setItem(ANALYTICS_KEY, JSON.stringify(state));
 	window.dispatchEvent(new CustomEvent(ANALYTICS_UPDATED_EVENT, { detail: state }));
-	const config = loadConfig();
-	if (config.admin.storageMode === "database" && config.admin.supabaseUrl && config.admin.supabaseAnonKey) syncAnalyticsToSupabase(state, config);
 }
 async function syncAnalyticsToSupabase(state, config) {
 	try {
@@ -1010,7 +1153,7 @@ async function syncAnalyticsToSupabase(state, config) {
 				"Content-Type": "application/json",
 				Prefer: "resolution=merge-duplicates,return=minimal",
 				apikey: config.admin.supabaseAnonKey,
-				Authorization: `Bearer ${config.admin.supabaseAnonKey}`
+				Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`
 			},
 			body: JSON.stringify([{
 				id: 1,
@@ -1027,12 +1170,13 @@ async function loadCloudAnalytics(config) {
 	try {
 		const response = await fetch(`${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/${CLOUD_ANALYTICS_TABLE}?id=eq.1&select=data`, { headers: {
 			apikey: config.admin.supabaseAnonKey,
-			Authorization: `Bearer ${config.admin.supabaseAnonKey}`
+			Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`
 		} });
 		if (!response.ok) return null;
 		const rows = await response.json();
 		if (!Array.isArray(rows) || !isRecord(rows[0])) return null;
-		return normalizeAnalytics(rows[0].data);
+		cloudAnalyticsState = normalizeAnalytics(rows[0]["data"]);
+		return structuredClone(cloudAnalyticsState);
 	} catch {
 		return null;
 	}
@@ -1077,6 +1221,7 @@ function trackConversion(source, variant) {
 }
 function clearAnalytics() {
 	if (!isBrowser()) return;
+	if (loadConfig().admin.storageMode === "database") return;
 	window.localStorage.removeItem(ANALYTICS_KEY);
 	window.dispatchEvent(new CustomEvent(ANALYTICS_UPDATED_EVENT, { detail: emptyAnalytics() }));
 }
@@ -1100,7 +1245,7 @@ async function syncConfigToSupabase(config) {
 				"Content-Type": "application/json",
 				Prefer: "resolution=merge-duplicates",
 				apikey: supabaseAnonKey,
-				Authorization: `Bearer ${supabaseAnonKey}`
+				Authorization: `Bearer ${bearer(supabaseAnonKey)}`
 			},
 			body: JSON.stringify([{
 				id: 1,
@@ -1133,7 +1278,7 @@ async function migrateLocalDataToSupabase(config) {
 			"Content-Type": "application/json",
 			Prefer: "resolution=merge-duplicates,return=minimal",
 			apikey: config.admin.supabaseAnonKey,
-			Authorization: `Bearer ${config.admin.supabaseAnonKey}`
+			Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`
 		},
 		body: JSON.stringify([{
 			id: 1,
@@ -1188,7 +1333,7 @@ async function testSupabaseConnection(url, key) {
 	try {
 		const res = await fetch(`${normalizedUrl}/rest/v1/${CLOUD_CONFIG_TABLE}?select=id&limit=1`, { headers: {
 			apikey: normalizedKey,
-			Authorization: `Bearer ${normalizedKey}`
+			Authorization: `Bearer ${bearer(normalizedKey)}`
 		} });
 		if (res.ok) return {
 			ok: true,
@@ -1300,4 +1445,4 @@ function useSiteConfig() {
 	return ctx;
 }
 //#endregion
-export { useSiteConfig as S, relayWebhook as _, clearAnalytics as a, trackConversion as b, exportConfigFile as c, isDuplicateLead as d, isDuplicateLeadRemote as f, migrateLocalDataToSupabase as g, loadLeads as h, SiteConfigProvider as i, exportLeadsCsv as l, loadCloudAnalytics as m, DEFAULT_CONFIG as n, clearLeads as o, loadAnalytics as p, LEAD_CREATED_EVENT as r, createSsrRpc as s, ANALYTICS_UPDATED_EVENT as t, exportSupabaseSql as u, saveLead as v, trackVisit as x, testSupabaseConnection as y };
+export { testSupabaseConnection as C, useSiteConfig as E, signInWithSupabase as S, trackVisit as T, loadCloudLeads as _, clearAnalytics as a, relayWebhook as b, createSsrRpc as c, exportSupabaseSql as d, getSupabaseAccessToken as f, loadCloudAnalytics as g, loadAnalytics as h, SiteConfigProvider as i, exportConfigFile as l, isDuplicateLeadRemote as m, DEFAULT_CONFIG as n, clearLeads as o, isDuplicateLead as p, LEAD_CREATED_EVENT as r, clearSupabaseAccessToken as s, ANALYTICS_UPDATED_EVENT as t, exportLeadsCsv as u, loadLeads as v, trackConversion as w, saveLead as x, migrateLocalDataToSupabase as y };

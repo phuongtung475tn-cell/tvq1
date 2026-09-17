@@ -1,7 +1,7 @@
 import { c as createServerFn } from "./createServerFn-CIHAFgYl.mjs";
 import { i as stringType, n as objectType, t as enumType } from "../_libs/zod.mjs";
-import { _ as relayWebhook, s as createSsrRpc } from "./use-site-config-DOhv-5qs.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/ab-CjZgG4e6.js
+import { b as relayWebhook, c as createSsrRpc } from "./use-site-config-CCuN-Fru.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/ab-CzJmWlKk.js
 /**
 * AUTOMATED EMAIL SEQUENCER (auto-responder).
 * Gửi email cảm ơn ngay sau khi khách đăng ký. Chạy phía server.
@@ -26,6 +26,7 @@ var FIRST_TOUCH_KEY = "lp_utm_first_v4";
 var LAST_TOUCH_KEY = "lp_utm_last_v4";
 /** Khoá cũ — vẫn đọc để không mất dữ liệu khách đã ghé trước đây */
 var LEGACY_KEYS = ["lp_utm_first_v3", "lp_utm_v2"];
+var memoryStore = /* @__PURE__ */ new Map();
 var UNKNOWN_SOURCE = "unknown_inapp_or_referral";
 var UTM_KEYS = [
 	"utm_source",
@@ -223,31 +224,13 @@ function clean(value) {
 	const trimmed = value.trim().slice(0, 500);
 	return isMeaningful(trimmed) ? trimmed : "";
 }
-function getStore(kind) {
-	return kind === "local" ? window.localStorage : window.sessionStorage;
-}
 function safeRead(kind, key) {
 	if (!isBrowser()) return null;
-	try {
-		const raw = getStore(kind).getItem(key);
-		if (!raw) return null;
-		const parsed = JSON.parse(raw);
-		if (!parsed || typeof parsed !== "object") return null;
-		return {
-			...EMPTY_RECORD,
-			...parsed,
-			params: parsed.params || {},
-			click_ids: parsed.click_ids || {}
-		};
-	} catch {
-		return null;
-	}
+	return memoryStore.get(`${kind}:${key}`) || null;
 }
 function safeWrite(kind, key, value) {
 	if (!isBrowser()) return;
-	try {
-		getStore(kind).setItem(key, JSON.stringify(value));
-	} catch {}
+	memoryStore.set(`${kind}:${key}`, value);
 }
 function detectReferrerSource(referrer) {
 	if (!referrer) return "";
@@ -716,7 +699,7 @@ function compactPayload(payload) {
 	const serialized = JSON.stringify(payload);
 	if (new TextEncoder().encode(serialized).byteLength <= MAX_PAYLOAD_BYTES) return payload;
 	const compact = { ...payload };
-	delete compact.visitor_behavior_payload;
+	delete compact["visitor_behavior_payload"];
 	return compact;
 }
 function webhookConfigurationWarning(endpoint, config) {
@@ -893,29 +876,24 @@ async function dispatchLead(config, payload) {
 * để lần sau vẫn thấy đúng biến thể đó.
 */
 var KEY_PREFIX = "funnel_ab_variant_v2";
+var variants = /* @__PURE__ */ new Map();
 function getVariant(enabled, splitToB) {
 	if (typeof window === "undefined" || !enabled) return "A";
 	const split = Math.min(100, Math.max(0, Number(splitToB) || 0));
 	const key = `${KEY_PREFIX}_${split}`;
-	try {
-		const saved = window.localStorage.getItem(key);
-		if (saved === "A" || saved === "B") return saved;
-		const variant = Math.random() * 100 < split ? "B" : "A";
-		window.localStorage.setItem(key, variant);
-		return variant;
-	} catch {
-		return "A";
-	}
+	const saved = variants.get(key);
+	if (saved) return saved;
+	const variant = Math.random() * 100 < split ? "B" : "A";
+	variants.set(key, variant);
+	return variant;
 }
 function resetVariant(splitToB) {
 	if (typeof window === "undefined") return;
-	try {
-		if (splitToB === void 0) Object.keys(window.localStorage).filter((key) => key.startsWith(`${KEY_PREFIX}_`)).forEach((key) => window.localStorage.removeItem(key));
-		else {
-			const split = Math.min(100, Math.max(0, Number(splitToB) || 0));
-			window.localStorage.removeItem(`${KEY_PREFIX}_${split}`);
-		}
-	} catch {}
+	if (splitToB === void 0) variants.clear();
+	else {
+		const split = Math.min(100, Math.max(0, Number(splitToB) || 0));
+		variants.delete(`${KEY_PREFIX}_${split}`);
+	}
 }
 function utmSource() {
 	if (typeof window === "undefined") return "direct";

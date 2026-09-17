@@ -7,6 +7,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import {
+  clearSupabaseAccessToken,
+  getSupabaseAccessToken,
+  signInWithSupabase,
+} from "@/lib/supabase-auth";
 
 export type AdminModalKey =
   | "editor"
@@ -44,7 +49,13 @@ export const DEFAULT_DEVICE_SIZES: Record<DeviceView, DeviceSize> = {
 
 interface AdminContextValue {
   authed: boolean;
-  login: (password: string, expected: string) => boolean;
+  login: (
+    password: string,
+    expected: string,
+    supabaseUrl?: string,
+    supabaseAnonKey?: string,
+    supabaseAdminEmail?: string,
+  ) => Promise<boolean>;
   logout: () => void;
   activeModal: AdminModalKey | null;
   openModal: (key: AdminModalKey) => void;
@@ -59,8 +70,6 @@ interface AdminContextValue {
   setPreviewEnabled: (enabled: boolean) => void;
 }
 
-const PREVIEW_KEY = "funnel_admin_preview_enabled_v1";
-
 const AdminContext = createContext<AdminContextValue | null>(null);
 
 export function AdminProvider({ children }: { children: ReactNode }) {
@@ -73,14 +82,11 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      setAuthed(window.sessionStorage.getItem(AUTH_KEY) === "1");
-      const savedSizes = window.localStorage.getItem(
-        "funnel_admin_device_sizes_v1",
+      setAuthed(
+        window.sessionStorage.getItem(AUTH_KEY) === "1" &&
+          (Boolean(getSupabaseAccessToken()) ||
+            !import.meta.env["VITE_SUPABASE_URL"]),
       );
-      if (savedSizes)
-        setDeviceSizes({ ...DEFAULT_DEVICE_SIZES, ...JSON.parse(savedSizes) });
-      const savedPreview = window.localStorage.getItem(PREVIEW_KEY);
-      if (savedPreview !== null) setPreviewEnabledState(savedPreview === "1");
     } catch {
       /* ignore */
     }
@@ -89,54 +95,58 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const setDeviceSize = useCallback((view: DeviceView, size: DeviceSize) => {
     setDeviceSizes((current) => {
       const next = { ...current, [view]: size };
-      try {
-        window.localStorage.setItem(
-          "funnel_admin_device_sizes_v1",
-          JSON.stringify(next),
-        );
-      } catch {
-        /* ignore */
-      }
       return next;
     });
   }, []);
 
   const resetDeviceSizes = useCallback(() => {
     setDeviceSizes(DEFAULT_DEVICE_SIZES);
-    try {
-      window.localStorage.removeItem("funnel_admin_device_sizes_v1");
-    } catch {
-      /* ignore */
-    }
   }, []);
 
   const setPreviewEnabled = useCallback((enabled: boolean) => {
     setPreviewEnabledState(enabled);
-    try {
-      window.localStorage.setItem(PREVIEW_KEY, enabled ? "1" : "0");
-    } catch {
-      /* ignore */
-    }
   }, []);
 
-  const login = useCallback((password: string, expected: string) => {
-    if (password && password === expected) {
-      setAuthed(true);
-      try {
-        window.sessionStorage.setItem(AUTH_KEY, "1");
-      } catch {
-        /* ignore */
+  const login = useCallback(
+    async (
+      password: string,
+      expected: string,
+      supabaseUrl = "",
+      supabaseAnonKey = "",
+      supabaseAdminEmail = "",
+    ) => {
+      const env = import.meta.env as Record<string, string | undefined>;
+      const email =
+        supabaseAdminEmail?.trim() ||
+        env["VITE_SUPABASE_ADMIN_EMAIL"]?.trim() ||
+        "";
+      const cloudLogin = await signInWithSupabase(
+        supabaseUrl,
+        supabaseAnonKey,
+        email,
+        password,
+      );
+      const localLogin = !supabaseUrl && password && password === expected;
+      if (cloudLogin || localLogin) {
+        setAuthed(true);
+        try {
+          window.sessionStorage.setItem(AUTH_KEY, "1");
+        } catch {
+          /* ignore */
+        }
+        return true;
       }
-      return true;
-    }
-    return false;
-  }, []);
+      return false;
+    },
+    [],
+  );
 
   const logout = useCallback(() => {
     setAuthed(false);
     setActiveModal(null);
     try {
       window.sessionStorage.removeItem(AUTH_KEY);
+      clearSupabaseAccessToken();
     } catch {
       /* ignore */
     }

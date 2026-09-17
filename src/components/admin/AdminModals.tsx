@@ -15,6 +15,7 @@ import {
   exportConfigFile,
   loadAnalytics,
   loadCloudAnalytics,
+  loadCloudLeads,
   loadLeads,
   migrateLocalDataToSupabase,
   exportSupabaseSql,
@@ -1421,7 +1422,13 @@ function LeadsModal({ onClose }: ModalProps) {
   const [q, setQ] = useState("");
 
   useEffect(() => {
-    const refresh = () => setLeads(loadLeads());
+    const refresh = () => {
+      if (config.admin.storageMode === "database") {
+        void loadCloudLeads(config).then(setLeads);
+      } else {
+        setLeads(loadLeads());
+      }
+    };
     refresh();
     window.addEventListener(LEAD_CREATED_EVENT, refresh);
     window.addEventListener("storage", refresh);
@@ -1429,7 +1436,7 @@ function LeadsModal({ onClose }: ModalProps) {
       window.removeEventListener(LEAD_CREATED_EVENT, refresh);
       window.removeEventListener("storage", refresh);
     };
-  }, []);
+  }, [config]);
 
   const cloud =
     config.admin.storageMode === "database" && !!config.admin.supabaseUrl;
@@ -1458,7 +1465,11 @@ function LeadsModal({ onClose }: ModalProps) {
       },
       config,
     );
-    setLeads(loadLeads());
+    if (config.admin.storageMode === "database") {
+      setLeads(await loadCloudLeads(config));
+    } else {
+      setLeads(loadLeads());
+    }
   };
 
   return (
@@ -1624,7 +1635,7 @@ function StorageModal({ onClose }: ModalProps) {
   return (
     <AdminModal
       title="Storage Mode"
-      subtitle="Local (mặc định) hoặc Supabase Cloud"
+      subtitle="Kết nối Supabase và xác thực quản trị"
       onClose={onClose}
     >
       <Field label="Chế độ lưu trữ">
@@ -1656,9 +1667,25 @@ function StorageModal({ onClose }: ModalProps) {
           </Field>
           <Field label="Supabase Anon Key">
             <TextInput
+              type="password"
+              autoComplete="off"
               value={a.supabaseAnonKey}
               onChange={(e) =>
                 update((d) => (d.admin.supabaseAnonKey = e.target.value))
+              }
+            />
+          </Field>
+          <Field
+            label="Email tài khoản Supabase Auth"
+            hint="Tài khoản này phải tồn tại trong Supabase → Authentication → Users."
+          >
+            <TextInput
+              type="email"
+              autoComplete="email"
+              placeholder="admin@example.com"
+              value={a.supabaseAdminEmail}
+              onChange={(e) =>
+                update((d) => (d.admin.supabaseAdminEmail = e.target.value))
               }
             />
           </Field>
@@ -1697,7 +1724,7 @@ function StorageModal({ onClose }: ModalProps) {
               try {
                 const result = await migrateLocalDataToSupabase(config);
                 setMigration(
-                  `Config: ${result.configSynced ? "đã đồng bộ" : "lỗi"}; Analytics: ${result.analyticsSynced ? "đã đồng bộ" : "lỗi"}; lead tải lên: ${result.leadsUploaded}; đã có trên cloud: ${result.leadsSkipped}; lỗi: ${result.leadsFailed}. Dữ liệu LocalStorage vẫn được giữ lại.`,
+                  `Config: ${result.configSynced ? "đã đồng bộ" : "lỗi"}; Analytics: ${result.analyticsSynced ? "đã đồng bộ" : "lỗi"}; lead tải lên: ${result.leadsUploaded}; đã có trên cloud: ${result.leadsSkipped}; lỗi: ${result.leadsFailed}. Dữ liệu local đã được dọn.`,
                 );
               } catch {
                 setMigration(

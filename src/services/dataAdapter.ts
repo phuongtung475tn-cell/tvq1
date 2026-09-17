@@ -1,8 +1,8 @@
 /**
  * HYBRID STORAGE ADAPTER
  * ----------------------
- * - LOCAL MODE (mặc định): đọc/ghi cấu hình qua localStorage, không cần DB.
- * - DATABASE MODE: đồng bộ qua Supabase REST (khi Admin cấu hình URL + anon key).
+ * - LOCAL MODE: đọc/ghi cấu hình qua localStorage, chỉ dành cho phát triển.
+ * - DATABASE MODE: dữ liệu nghiệp vụ và cấu hình chỉ nằm trên Supabase.
  *
  * Toàn bộ hệ thống chỉ gọi qua adapter này nên có thể đổi backend mà không sửa UI.
  */
@@ -13,6 +13,7 @@ import {
 } from "@/config/site-config";
 import type { VisitorBehaviorPayload } from "@/types/visitor-tracking";
 import { relayWebhook } from "@/services/webhook.functions";
+import { getSupabaseAccessToken } from "@/lib/supabase-auth";
 
 const CONFIG_KEY = "funnel_site_config_v1";
 const LEADS_KEY = "funnel_leads_v1";
@@ -25,6 +26,69 @@ const CLOUD_ANALYTICS_TABLE = "funnel_analytics";
 const LOCAL_MIGRATION_KEY = "funnel_supabase_migrated_leads_v1";
 const REMOTE_LEAD_TIMEOUT_MS = 3_000;
 const REMOTE_DUPLICATE_TIMEOUT_MS = 1_500;
+
+function bearer(key: string): string {
+  return getSupabaseAccessToken() || key;
+}
+
+const browserDataKeys = [
+  CONFIG_KEY,
+  LEADS_KEY,
+  ANALYTICS_KEY,
+  BACKUP_KEY,
+  LOCAL_MIGRATION_KEY,
+] as const;
+const browserCacheKeys = [
+  ...browserDataKeys,
+  "lp_visitor_id_v2",
+  "lp_utm_first_v4",
+  "lp_utm_last_v4",
+  "lp_utm_first_v3",
+  "lp_utm_v2",
+  "lp_visit_counters_v2",
+  "lp_submission_counters_v2",
+  "lp_rate",
+  "funnel_ab_variant_v2_A",
+  "funnel_ab_variant_v2_B",
+] as const;
+
+function configuredSupabase(): { url: string; key: string } {
+  const env = import.meta.env as Record<string, string | undefined>;
+  return {
+    url: env["VITE_SUPABASE_URL"]?.trim().replace(/\/$/, "") || "",
+    key: env["VITE_SUPABASE_ANON_KEY"]?.trim() || "",
+  };
+}
+
+function clearBrowserData(): void {
+  if (!isBrowser()) return;
+  for (const key of browserDataKeys) {
+    try {
+      window.localStorage.removeItem(key);
+    } catch {
+      /* storage may be blocked */
+    }
+  }
+}
+
+export function clearClientCache(): void {
+  if (!isBrowser()) return;
+  for (const key of browserCacheKeys) {
+    try {
+      window.localStorage.removeItem(key);
+      window.sessionStorage.removeItem(key);
+    } catch {
+      /* storage may be blocked */
+    }
+  }
+  if ("caches" in window) {
+    void window.caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.map((key) => window.caches.delete(key))),
+      );
+  }
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -87,9 +151,12 @@ function preserveLocalSecrets(
   merged: SiteConfig,
   local: SiteConfig,
 ): SiteConfig {
-  merged.admin.supabaseUrl = local.admin.supabaseUrl;
-  merged.admin.supabaseAnonKey = local.admin.supabaseAnonKey;
-  merged.admin.storageMode = local.admin.storageMode;
+  const env = configuredSupabase();
+  merged.admin.supabaseUrl = env.url || local.admin.supabaseUrl;
+  merged.admin.supabaseAnonKey = env.key || local.admin.supabaseAnonKey;
+  merged.admin.supabaseAdminEmail = local.admin.supabaseAdminEmail;
+  merged.admin.password = "";
+  merged.admin.storageMode = "database";
   merged.admin.backupCronToken = local.admin.backupCronToken;
   merged.emailAutomation.resendApiKey = local.emailAutomation.resendApiKey;
   merged.emailAutomation.gmailClientId = local.emailAutomation.gmailClientId;
@@ -106,10 +173,16 @@ export function loadConfig(): SiteConfig {
   try {
     const raw = window.localStorage.getItem(CONFIG_KEY);
     const parsed = raw ? (JSON.parse(raw) as unknown) : null;
-    return mergeConfig(
+    const config = mergeConfig(
       DEFAULT_CONFIG,
       isRecord(parsed) ? (parsed as Partial<SiteConfig>) : null,
     );
+    const env = configuredSupabase();
+    clearClientCache();
+    config.admin.storageMode = "database";
+    config.admin.supabaseUrl = env.url;
+    config.admin.supabaseAnonKey = env.key;
+    return config;
   } catch {
     return structuredClone(DEFAULT_CONFIG);
   }
@@ -133,7 +206,7 @@ export async function loadCloudConfig(
       {
         headers: {
           apikey: config.admin.supabaseAnonKey,
-          Authorization: `Bearer ${config.admin.supabaseAnonKey}`,
+          Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`,
         },
       },
     );
@@ -143,10 +216,12 @@ export async function loadCloudConfig(
     const data = rows[0]["data"];
     if (!isRecord(data)) return null;
     // Credential không được lưu cloud, nên luôn giữ bản local khi hydrate.
-    return preserveLocalSecrets(
+    const hydrated = preserveLocalSecrets(
       mergeConfig(config, data as Partial<SiteConfig>),
       config,
     );
+    clearClientCache();
+    return hydrated;
   } catch {
     return null;
   }
@@ -154,42 +229,26 @@ export async function loadCloudConfig(
 
 export function saveConfig(config: SiteConfig): void {
   if (!isBrowser()) return;
-  let localSaved = true;
-  try {
-    window.localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-  } catch {
-    localSaved = false;
-    console.warn(
-      "LocalStorage config save failed; continuing with Supabase sync.",
-    );
+  if (config.admin.storageMode !== "database") {
+    clearClientCache();
+    console.error("Local storage mode is disabled; configure Supabase first.");
+    return;
   }
-  // Auto backup snapshot (giữ tối đa 10 bản gần nhất)
-  try {
-    const snaps = JSON.parse(
-      window.localStorage.getItem(BACKUP_KEY) || "[]",
-    ) as unknown[];
-    snaps.unshift({ at: new Date().toISOString(), config });
-    window.localStorage.setItem(BACKUP_KEY, JSON.stringify(snaps.slice(0, 10)));
-  } catch {
-    /* ignore */
-  }
-  // DATABASE MODE: đẩy lên Supabase nếu được cấu hình.
-  if (
-    config.admin.storageMode === "database" &&
-    config.admin.supabaseUrl &&
-    config.admin.supabaseAnonKey
-  ) {
-    void syncConfigToSupabase(config);
-  }
-  if (!localSaved && config.admin.storageMode !== "database") {
-    console.warn(
-      "Config is not persisted locally because Database Mode is disabled.",
-    );
+  if (config.admin.storageMode === "database") {
+    clearClientCache();
+    if (config.admin.supabaseUrl && config.admin.supabaseAnonKey) {
+      void syncConfigToSupabase(config);
+    } else {
+      console.error(
+        "Database mode requires VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.",
+      );
+    }
+    return;
   }
 }
 
 export function resetConfig(): SiteConfig {
-  if (isBrowser()) window.localStorage.removeItem(CONFIG_KEY);
+  clearClientCache();
   return structuredClone(DEFAULT_CONFIG);
 }
 
@@ -346,10 +405,66 @@ export interface LeadRecord {
 
 export function loadLeads(): LeadRecord[] {
   if (!isBrowser()) return [];
+  if (loadConfig().admin.storageMode === "database") return [];
   try {
     return JSON.parse(
       window.localStorage.getItem(LEADS_KEY) || "[]",
     ) as LeadRecord[];
+  } catch {
+    return [];
+  }
+}
+
+export async function loadCloudLeads(
+  config: SiteConfig,
+): Promise<LeadRecord[]> {
+  if (
+    !isBrowser() ||
+    config.admin.storageMode !== "database" ||
+    !config.admin.supabaseUrl ||
+    !config.admin.supabaseAnonKey
+  ) {
+    return [];
+  }
+  try {
+    const response = await fetch(
+      `${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/leads?select=*&order=created_at.desc&limit=500`,
+      {
+        headers: {
+          apikey: config.admin.supabaseAnonKey,
+          Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`,
+        },
+      },
+    );
+    if (!response.ok) return [];
+    const rows = (await response.json()) as Array<Record<string, unknown>>;
+    return rows.map((row) => ({
+      id: String(row["id"] || ""),
+      at: String(row["created_at"] || ""),
+      name: String(row["name"] || ""),
+      phone: String(row["phone"] || ""),
+      email: String(row["email"] || ""),
+      city: String(row["city"] || ""),
+      major: String(row["major"] || ""),
+      aiScore:
+        typeof row["ai_score"] === "number" ? row["ai_score"] : undefined,
+      aiRank: String(row["ai_rank"] || ""),
+      riskLevel: row["risk_level"] as LeadRecord["riskLevel"],
+      riskReasons: row["risk_reasons"] as string[] | undefined,
+      recommendedAction: String(row["recommended_action"] || ""),
+      behaviorSummary: String(row["behavior_summary"] || ""),
+      saleAdvice: String(row["sale_advice"] || ""),
+      currentSession: Number(row["current_session"] || 0),
+      visitsToday: Number(row["visits_today"] || 0),
+      visitsMonth: Number(row["visits_month"] || 0),
+      utmSource: String(row["utm_source"] || ""),
+      utmMedium: String(row["utm_medium"] || ""),
+      variant: String(row["variant"] || ""),
+      deviceModel: String(row["device_model"] || ""),
+      operatingSystem: String(row["operating_system"] || ""),
+      browser: String(row["browser"] || ""),
+      storage: "database",
+    }));
   } catch {
     return [];
   }
@@ -371,6 +486,7 @@ function cacheLeadLocally(record: LeadRecord): void {
 
 /** Trùng lặp: cùng số điện thoại đã gửi trong 24 giờ gần nhất. */
 export function isDuplicateLead(phone: string): boolean {
+  if (loadConfig().admin.storageMode === "database") return false;
   const cutoff = Date.now() - 24 * 60 * 60 * 1000;
   return loadLeads().some(
     (l) => l.phone === phone && new Date(l.at).getTime() > cutoff,
@@ -404,7 +520,7 @@ export async function isDuplicateLeadRemote(
       const res = await fetch(url, {
         headers: {
           apikey: config.admin.supabaseAnonKey,
-          Authorization: `Bearer ${config.admin.supabaseAnonKey}`,
+          Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`,
         },
         signal: controller.signal,
       });
@@ -440,14 +556,9 @@ export async function saveLead(
   config?: SiteConfig,
 ): Promise<LeadRecord> {
   const mode: StorageMode =
-    config?.admin.storageMode === "database" &&
-    config.admin.supabaseUrl &&
-    config.admin.supabaseAnonKey
-      ? "database"
-      : "local";
+    config?.admin.storageMode === "database" ? "database" : "local";
   const record: LeadRecord = { ...lead, storage: mode };
-  // Cache trước khi gọi mạng để in-app browser không làm mất lead khi request bị treo.
-  cacheLeadLocally(record);
+  if (mode === "local") cacheLeadLocally(record);
   if (mode === "database" && config) {
     const ok = await pushLeadToSupabase(
       record,
@@ -474,7 +585,7 @@ async function pushLeadToSupabase(
     const headers = {
       "Content-Type": "application/json",
       apikey: key,
-      Authorization: `Bearer ${key}`,
+      Authorization: `Bearer ${bearer(key)}`,
       Prefer: "return=minimal",
     };
     const row = {
@@ -533,15 +644,15 @@ async function pushLeadToSupabase(
       body: JSON.stringify([row]),
     });
     if (!res.ok && res.status >= 400 && res.status < 500) {
-      const legacy = { ...row };
-      delete legacy.utm_term;
-      delete legacy.fbclid;
-      delete legacy.gclid;
-      delete legacy.raw_query;
-      delete legacy.referrer;
-      delete legacy.attribution_model;
-      delete legacy.attribution_detected_by;
-      delete legacy.utm_params;
+      const legacy = { ...row } as Record<string, unknown>;
+      delete legacy["utm_term"];
+      delete legacy["fbclid"];
+      delete legacy["gclid"];
+      delete legacy["raw_query"];
+      delete legacy["referrer"];
+      delete legacy["attribution_model"];
+      delete legacy["attribution_detected_by"];
+      delete legacy["utm_params"];
       const fallback = await fetch(endpoint, {
         method: "POST",
         headers,
@@ -623,6 +734,8 @@ export interface AnalyticsState {
   byVariant: Record<string, { visits: number; leads: number }>;
 }
 
+let cloudAnalyticsState: AnalyticsState | null = null;
+
 function emptyAnalytics(): AnalyticsState {
   return {
     visits: 0,
@@ -685,6 +798,11 @@ function normalizeAnalytics(
 
 export function loadAnalytics(): AnalyticsState {
   if (!isBrowser()) return emptyAnalytics();
+  if (loadConfig().admin.storageMode === "database") {
+    return cloudAnalyticsState
+      ? structuredClone(cloudAnalyticsState)
+      : emptyAnalytics();
+  }
   try {
     return normalizeAnalytics(
       JSON.parse(
@@ -698,18 +816,20 @@ export function loadAnalytics(): AnalyticsState {
 
 function saveAnalytics(state: AnalyticsState): void {
   if (!isBrowser()) return;
+  const config = loadConfig();
+  if (config.admin.storageMode === "database") {
+    window.dispatchEvent(
+      new CustomEvent<AnalyticsState>(ANALYTICS_UPDATED_EVENT, {
+        detail: state,
+      }),
+    );
+    void syncAnalyticsToSupabase(state, config);
+    return;
+  }
   window.localStorage.setItem(ANALYTICS_KEY, JSON.stringify(state));
   window.dispatchEvent(
     new CustomEvent<AnalyticsState>(ANALYTICS_UPDATED_EVENT, { detail: state }),
   );
-  const config = loadConfig();
-  if (
-    config.admin.storageMode === "database" &&
-    config.admin.supabaseUrl &&
-    config.admin.supabaseAnonKey
-  ) {
-    void syncAnalyticsToSupabase(state, config);
-  }
 }
 
 async function syncAnalyticsToSupabase(
@@ -725,7 +845,7 @@ async function syncAnalyticsToSupabase(
           "Content-Type": "application/json",
           Prefer: "resolution=merge-duplicates,return=minimal",
           apikey: config.admin.supabaseAnonKey,
-          Authorization: `Bearer ${config.admin.supabaseAnonKey}`,
+          Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`,
         },
         body: JSON.stringify([
           { id: 1, data: state, updated_at: new Date().toISOString() },
@@ -755,14 +875,17 @@ export async function loadCloudAnalytics(
       {
         headers: {
           apikey: config.admin.supabaseAnonKey,
-          Authorization: `Bearer ${config.admin.supabaseAnonKey}`,
+          Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`,
         },
       },
     );
     if (!response.ok) return null;
     const rows = (await response.json()) as unknown;
     if (!Array.isArray(rows) || !isRecord(rows[0])) return null;
-    return normalizeAnalytics(rows[0].data as Partial<AnalyticsState>);
+    cloudAnalyticsState = normalizeAnalytics(
+      rows[0]["data"] as Partial<AnalyticsState>,
+    );
+    return structuredClone(cloudAnalyticsState);
   } catch {
     return null;
   }
@@ -804,6 +927,7 @@ export function trackConversion(source: string, variant?: string): void {
 
 export function clearAnalytics(): void {
   if (!isBrowser()) return;
+  if (loadConfig().admin.storageMode === "database") return;
   window.localStorage.removeItem(ANALYTICS_KEY);
   window.dispatchEvent(
     new CustomEvent<AnalyticsState>(ANALYTICS_UPDATED_EVENT, {
@@ -836,7 +960,7 @@ async function syncConfigToSupabase(config: SiteConfig): Promise<void> {
           "Content-Type": "application/json",
           Prefer: "resolution=merge-duplicates",
           apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
+          Authorization: `Bearer ${bearer(supabaseAnonKey)}`,
         },
         body: JSON.stringify([
           { id: 1, data: cloudConfig, updated_at: new Date().toISOString() },
@@ -892,7 +1016,7 @@ export async function migrateLocalDataToSupabase(
         "Content-Type": "application/json",
         Prefer: "resolution=merge-duplicates,return=minimal",
         apikey: config.admin.supabaseAnonKey,
-        Authorization: `Bearer ${config.admin.supabaseAnonKey}`,
+        Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`,
       },
       body: JSON.stringify([
         {
@@ -980,7 +1104,7 @@ export async function testSupabaseConnection(
       {
         headers: {
           apikey: normalizedKey,
-          Authorization: `Bearer ${normalizedKey}`,
+          Authorization: `Bearer ${bearer(normalizedKey)}`,
         },
       },
     );

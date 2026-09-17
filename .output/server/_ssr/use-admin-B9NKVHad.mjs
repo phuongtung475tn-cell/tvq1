@@ -1,7 +1,8 @@
 import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-hZzAbtud.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/use-admin-D0sSGca6.js
+import { S as signInWithSupabase, f as getSupabaseAccessToken, s as clearSupabaseAccessToken } from "./use-site-config-CCuN-Fru.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/use-admin-B9NKVHad.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var AUTH_KEY = "funnel_admin_authed_v1";
@@ -19,7 +20,6 @@ var DEFAULT_DEVICE_SIZES = {
 		height: 780
 	}
 };
-var PREVIEW_KEY = "funnel_admin_preview_enabled_v1";
 var AdminContext = (0, import_react.createContext)(null);
 function AdminProvider({ children }) {
 	const [authed, setAuthed] = (0, import_react.useState)(false);
@@ -29,42 +29,52 @@ function AdminProvider({ children }) {
 	const [previewEnabled, setPreviewEnabledState] = (0, import_react.useState)(true);
 	(0, import_react.useEffect)(() => {
 		try {
-			setAuthed(window.sessionStorage.getItem(AUTH_KEY) === "1");
-			const savedSizes = window.localStorage.getItem("funnel_admin_device_sizes_v1");
-			if (savedSizes) setDeviceSizes({
-				...DEFAULT_DEVICE_SIZES,
-				...JSON.parse(savedSizes)
-			});
-			const savedPreview = window.localStorage.getItem(PREVIEW_KEY);
-			if (savedPreview !== null) setPreviewEnabledState(savedPreview === "1");
+			setAuthed(window.sessionStorage.getItem(AUTH_KEY) === "1" && (Boolean(getSupabaseAccessToken()) || !{
+				"BASE_URL": "/",
+				"DEV": false,
+				"MODE": "production",
+				"PROD": true,
+				"SSR": true,
+				"TSS_DEV_SERVER": "false",
+				"TSS_DEV_SSR_STYLES_BASEPATH": "/",
+				"TSS_DEV_SSR_STYLES_ENABLED": "true",
+				"TSS_DISABLE_CSRF_MIDDLEWARE_WARNING": "false",
+				"TSS_INLINE_CSS_ENABLED": "false",
+				"TSS_ROUTER_BASEPATH": "",
+				"TSS_SERVER_FN_BASE": "/_serverFn/"
+			}["VITE_SUPABASE_URL"]));
 		} catch {}
 	}, []);
 	const setDeviceSize = (0, import_react.useCallback)((view, size) => {
 		setDeviceSizes((current) => {
-			const next = {
+			return {
 				...current,
 				[view]: size
 			};
-			try {
-				window.localStorage.setItem("funnel_admin_device_sizes_v1", JSON.stringify(next));
-			} catch {}
-			return next;
 		});
 	}, []);
 	const resetDeviceSizes = (0, import_react.useCallback)(() => {
 		setDeviceSizes(DEFAULT_DEVICE_SIZES);
-		try {
-			window.localStorage.removeItem("funnel_admin_device_sizes_v1");
-		} catch {}
 	}, []);
 	const setPreviewEnabled = (0, import_react.useCallback)((enabled) => {
 		setPreviewEnabledState(enabled);
-		try {
-			window.localStorage.setItem(PREVIEW_KEY, enabled ? "1" : "0");
-		} catch {}
 	}, []);
-	const login = (0, import_react.useCallback)((password, expected) => {
-		if (password && password === expected) {
+	const login = (0, import_react.useCallback)(async (password, expected, supabaseUrl = "", supabaseAnonKey = "", supabaseAdminEmail = "") => {
+		const email = supabaseAdminEmail?.trim() || {
+			"BASE_URL": "/",
+			"DEV": false,
+			"MODE": "production",
+			"PROD": true,
+			"SSR": true,
+			"TSS_DEV_SERVER": "false",
+			"TSS_DEV_SSR_STYLES_BASEPATH": "/",
+			"TSS_DEV_SSR_STYLES_ENABLED": "true",
+			"TSS_DISABLE_CSRF_MIDDLEWARE_WARNING": "false",
+			"TSS_INLINE_CSS_ENABLED": "false",
+			"TSS_ROUTER_BASEPATH": "",
+			"TSS_SERVER_FN_BASE": "/_serverFn/"
+		}["VITE_SUPABASE_ADMIN_EMAIL"]?.trim() || "";
+		if (await signInWithSupabase(supabaseUrl, supabaseAnonKey, email, password) || !supabaseUrl && password && password === expected) {
 			setAuthed(true);
 			try {
 				window.sessionStorage.setItem(AUTH_KEY, "1");
@@ -78,6 +88,7 @@ function AdminProvider({ children }) {
 		setActiveModal(null);
 		try {
 			window.sessionStorage.removeItem(AUTH_KEY);
+			clearSupabaseAccessToken();
 		} catch {}
 	}, []);
 	const value = (0, import_react.useMemo)(() => ({

@@ -1,11 +1,11 @@
 {
-  "compatibility_date": "2026-09-16",
+  "compatibility_date": "2026-09-17",
   "main": "index.mjs",
   "assets": {
     "binding": "ASSETS",
     "directory": "../public"
   },
-  "name": "phuongtung478tn-wq-tqv10",
+  "name": "phuongtung475tn-cell-tvq1",
   "compatibility_flags": [
     "nodejs_compat"
   ],

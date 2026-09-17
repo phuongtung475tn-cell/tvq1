@@ -11,7 +11,7 @@ Dự án dùng **TanStack Start (React + Vite)**. Có 2 cách chạy:
 ## 0. Yêu cầu
 
 - Node.js 18+ và npm.
-- (Tùy chọn) Tài khoản Supabase Cloud nếu muốn dùng chế độ **Database Mode**.
+- Tài khoản Supabase Cloud và biến môi trường `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
 - (Tùy chọn) Khóa Resend `RESEND_API_KEY` nếu muốn gửi email tự động.
 
 Cài dependency và chạy thử local:
@@ -30,6 +30,9 @@ npm run build    # tạo bản build production
 2. Vào Vercel → **New Project** → chọn repo → framework tự nhận **TanStack Start**.
 3. Thêm biến môi trường (Project → Settings → Environment Variables):
    - `RESEND_API_KEY` — nếu bật Auto Email.
+   - `VITE_SUPABASE_URL` — URL public của project Supabase.
+   - `VITE_SUPABASE_ANON_KEY` — publishable/anon key, không dùng service role key.
+   - `VITE_SUPABASE_ADMIN_EMAIL` — email của user quản trị đã tạo trong Supabase Auth.
 4. Bấm **Deploy**. Xong.
 
 > Form lead, CRM cloud và webhook relay cần deployment có SSR như Vercel.
@@ -84,14 +87,14 @@ npm run build    # tạo bản build production
 
 ## C. Kết nối Supabase Cloud (Database Mode)
 
-Dùng khi muốn cấu hình & lead đồng bộ nhiều thiết bị thay vì chỉ localStorage.
+Dùng để cấu hình, lead và analytics đồng bộ nhiều thiết bị. Database Mode không ghi dữ liệu nghiệp vụ vào localStorage.
 
 1. Tạo project tại [supabase.com](https://supabase.com).
 2. Trong SQL Editor, chạy `supabase/funnel_configs.sql` và `supabase/visitor_tracking.sql`.
    Nếu cần nhập tay, tối thiểu tạo các bảng `funnel_configs`, `leads`, `visitor_sessions`
    với các cột tracking/CRM tương ứng để Database Mode lưu được lead + phiên truy cập.
-3. Bật RLS và thêm policy phù hợp (hoặc dùng service role qua webhook server-side).
-4. Vào **Admin → ⚙️ Storage Mode**: dán `Supabase URL` + `anon key`, đổi sang **Database**, bấm **Kiểm tra kết nối** rồi **LƯU**.
+3. Tạo user quản trị trong Supabase Auth, bật RLS và chạy đúng policy trong SQL ở trên. Các thao tác quản trị cấu hình/analytics phải chạy bằng Supabase Auth (`authenticated`); không mở lại policy ghi cho `anon`.
+4. Cấu hình `VITE_SUPABASE_URL` và `VITE_SUPABASE_ANON_KEY` trong môi trường build rồi deploy lại. Không lưu service role key ở frontend.
 
 ---
 

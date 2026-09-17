@@ -4,35 +4,26 @@
  * để lần sau vẫn thấy đúng biến thể đó.
  */
 const KEY_PREFIX = "funnel_ab_variant_v2";
+const variants = new Map<string, "A" | "B">();
 
 export function getVariant(enabled: boolean, splitToB: number): "A" | "B" {
   if (typeof window === "undefined" || !enabled) return "A";
   const split = Math.min(100, Math.max(0, Number(splitToB) || 0));
   const key = `${KEY_PREFIX}_${split}`;
-  try {
-    const saved = window.localStorage.getItem(key);
-    if (saved === "A" || saved === "B") return saved;
-    const variant = Math.random() * 100 < split ? "B" : "A";
-    window.localStorage.setItem(key, variant);
-    return variant;
-  } catch {
-    return "A";
-  }
+  const saved = variants.get(key);
+  if (saved) return saved;
+  const variant = Math.random() * 100 < split ? "B" : "A";
+  variants.set(key, variant);
+  return variant;
 }
 
 export function resetVariant(splitToB?: number): void {
   if (typeof window === "undefined") return;
-  try {
-    if (splitToB === undefined) {
-      Object.keys(window.localStorage)
-        .filter((key) => key.startsWith(`${KEY_PREFIX}_`))
-        .forEach((key) => window.localStorage.removeItem(key));
-    } else {
-      const split = Math.min(100, Math.max(0, Number(splitToB) || 0));
-      window.localStorage.removeItem(`${KEY_PREFIX}_${split}`);
-    }
-  } catch {
-    /* ignore storage restrictions */
+  if (splitToB === undefined) {
+    variants.clear();
+  } else {
+    const split = Math.min(100, Math.max(0, Number(splitToB) || 0));
+    variants.delete(`${KEY_PREFIX}_${split}`);
   }
 }
 

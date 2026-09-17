@@ -1,10 +1,10 @@
 import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-hZzAbtud.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { S as useSiteConfig } from "./use-site-config-DOhv-5qs.mjs";
-import { n as useAdmin } from "./use-admin-D0sSGca6.mjs";
+import { E as useSiteConfig } from "./use-site-config-CCuN-Fru.mjs";
+import { n as useAdmin } from "./use-admin-B9NKVHad.mjs";
 import { C as Lock } from "../_libs/lucide-react.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/AdminLoginPage-B5atUdTg.js
+//#region node_modules/.nitro/vite/services/ssr/assets/AdminLoginPage-BO8B-Rue.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 /** Màn hình đăng nhập quản trị — dùng cho /admin và đường dẫn tuỳ chỉnh. */
@@ -12,11 +12,15 @@ function AdminLoginPage() {
 	const { authed, login } = useAdmin();
 	const { config, ready: configReady } = useSiteConfig();
 	const [password, setPassword] = (0, import_react.useState)("");
+	const [email, setEmail] = (0, import_react.useState)(config.admin.supabaseAdminEmail);
 	const [error, setError] = (0, import_react.useState)(false);
 	const passwordInputRef = (0, import_react.useRef)(null);
-	function handleSubmit() {
+	(0, import_react.useEffect)(() => {
+		setEmail(config.admin.supabaseAdminEmail);
+	}, [config.admin.supabaseAdminEmail]);
+	async function handleSubmit() {
 		const nextPassword = passwordInputRef.current?.value ?? password;
-		if (login(nextPassword, config.admin.password)) window.location.assign("/");
+		if (await login(nextPassword, config.admin.password, config.admin.supabaseUrl, config.admin.supabaseAnonKey, email)) window.location.assign("/");
 		else setError(true);
 	}
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("main", {
@@ -52,6 +56,17 @@ function AdminLoginPage() {
 			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "space-y-3",
 				children: [
+					config.admin.storageMode === "database" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+						type: "email",
+						value: email,
+						onChange: (e) => {
+							setEmail(e.target.value);
+							setError(false);
+						},
+						placeholder: "Email Supabase Auth",
+						autoComplete: "username",
+						className: "w-full rounded-lg bg-neutral-800 px-3 py-2.5 text-sm outline-none ring-1 ring-white/10 focus:ring-white/30"
+					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
 						ref: passwordInputRef,
 						type: "password",

@@ -56,7 +56,7 @@ async function handleBackupRequest(request: Request): Promise<Response> {
   }
 
   const headers = {
-    apikey: serviceKey,
+    apikey: serviceKey as string,
     Authorization: `Bearer ${serviceKey}`,
   };
   const configResponse = await fetch(
@@ -169,7 +169,17 @@ export default {
       if (isBackupRequest(request)) return await handleBackupRequest(request);
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      const normalized = await normalizeCatastrophicSsrResponse(response);
+      const headers = new Headers(normalized.headers);
+      headers.set("Cache-Control", "no-store, max-age=0");
+      headers.set("Pragma", "no-cache");
+      headers.set("X-Content-Type-Options", "nosniff");
+      headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+      return new Response(normalized.body, {
+        status: normalized.status,
+        statusText: normalized.statusText,
+        headers,
+      });
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {
