@@ -1,38 +1,92 @@
-# Pixel Perfect Prototype
+# Du học nghề Trung Quốc
 
-Implement exactly the screenshot and nothing else
+Landing page tuyển sinh du học nghề Trung Quốc, kèm funnel builder và khu vực
+quản trị lead. Ứng dụng dùng TanStack Start, React, Vite và Supabase.
 
-This project was built with [Lovable](https://lovable.dev).
+## Tính năng chính
 
-**Live app**: https://pixel-perf-ct-123.lovable.app
+- Landing page responsive với nội dung ngành học, lợi ích, FAQ, gallery và form
+  đăng ký.
+- Thu thập lead, UTM tracking, analytics hành vi và các CTA liên hệ.
+- `/admin` cho đăng nhập quản trị, cấu hình funnel, quản lý lead và dữ liệu
+  analytics.
+- Kết nối Supabase cho Auth, cấu hình funnel, lead và visitor tracking.
+- Server functions cho webhook, email lead và backup theo lịch khi chạy SSR.
 
-## Build with Lovable
+## Yêu cầu
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/d40b8cee-ea9e-4055-9e5d-64d866334fe8).
+- Node.js 18+ và npm.
+- Supabase project nếu cần lưu lead, đăng nhập admin hoặc analytics tập trung.
+- Vercel hoặc môi trường SSR tương thích nếu cần server functions.
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+## Chạy local
 
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+```bash
+git clone <repository-url>
+cd <repository-directory>
+npm ci
+cp .env.example .env
 npm run dev
 ```
 
-# pixel-perf-ct-123-main-2
+Mở URL mà Vite in ra trong terminal, sau đó kiểm tra `/` và `/admin`. Không
+commit `.env`; chỉ dùng `.env.example` làm mẫu tên biến. Danh sách biến public,
+server-only và cấu hình Supabase được mô tả trong [DEPLOY_GUIDE.md](DEPLOY_GUIDE.md).
 
-# duhoctqv2
+## Lệnh dự án
 
-# duhoctqv2
+| Lệnh | Mục đích |
+| --- | --- |
+| `npm run dev` | Chạy development server |
+| `npm run build` | Build production SSR |
+| `npm run build:dev` | Build bằng development mode |
+| `npm run preview` | Xem bản build local |
+| `npm run lint` | Kiểm tra ESLint |
+| `npm run format` | Format bằng Prettier |
+| `npx playwright test` | Chạy E2E tests |
 
-# duhoctqv2
+## Cấu trúc mã nguồn
 
-# duhoctq3
+```text
+src/
+  routes/       Route landing page, admin và fallback
+  components/   UI landing page, form, admin và component primitives
+  services/     Server functions, webhook và data adapter
+  lib/          Auth, config, tracking, email và tiện ích dùng chung
+  config/       Nội dung/cấu hình site mặc định
+  assets/       Hình ảnh được bundler quản lý
+  styles.css    CSS toàn cục
+supabase/       Schema, RLS policy và SQL migration
+tests/e2e/      Kiểm thử luồng admin bằng Playwright
+public/         File tĩnh công khai
+```
 
-# duhoctq3
+## Supabase
+
+Với project mới, chạy file tổng hợp `supabase/supabase-funnel-2026-09-17.sql` hoặc chạy
+các script trong `supabase/` theo thứ tự được ghi trong
+[DEPLOY_GUIDE.md](DEPLOY_GUIDE.md). Tài khoản admin phải tồn tại trong Supabase
+Auth và được bật trong bảng `public.admin_users`. Không đưa
+`SUPABASE_SERVICE_ROLE_KEY` vào biến `VITE_*` hoặc mã frontend.
+
+## Kiểm tra trước khi phát hành
+
+Chạy tối thiểu:
+
+```bash
+npm ci
+npm run lint
+npm run build
+npx playwright test
+```
+
+Checklist đầy đủ nằm trong [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md). Hướng
+dẫn Vercel, hosting tĩnh, domain, cron và xử lý Supabase nằm trong
+[DEPLOY_GUIDE.md](DEPLOY_GUIDE.md).
+
+## Bảo mật và dữ liệu
+
+- Chỉ commit schema, migration và biến môi trường mẫu; không commit secret,
+  backup, build output hoặc dữ liệu lead thật.
+- RLS của Supabase là lớp bảo vệ dữ liệu bắt buộc, không coi anon key là secret.
+- Sau khi đổi biến `VITE_*`, phải redeploy vì chúng được inject lúc build.

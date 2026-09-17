@@ -5,7 +5,7 @@ export type LeadRiskLevel = "low" | "review" | "high" | "unrated";
 /** Nguồn lưu trữ duy nhất: dùng chung StorageMode của cấu hình site. */
 export type TrackingStorageMode = StorageMode;
 export type LookupStatus =
-  | "idle" | "loading" | "resolved" | "fallback" | "error";
+  "idle" | "loading" | "resolved" | "fallback" | "error";
 
 export interface DeviceProfile {
   userAgent: string;

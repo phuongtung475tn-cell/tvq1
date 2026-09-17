@@ -26,7 +26,8 @@ export function PhotoCarousel({
     if (!lightbox) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setLightbox(false);
-      if (e.key === "ArrowLeft") setI((p) => (p - 1 + slides.length) % slides.length);
+      if (e.key === "ArrowLeft")
+        setI((p) => (p - 1 + slides.length) % slides.length);
       if (e.key === "ArrowRight") setI((p) => (p + 1) % slides.length);
     };
     window.addEventListener("keydown", onKey);

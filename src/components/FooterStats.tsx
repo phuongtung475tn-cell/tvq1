@@ -1,9 +1,4 @@
-import {
-  CalendarDays,
-  Clock,
-  MousePointerClick,
-  Users,
-} from "lucide-react";
+import { CalendarDays, Clock, MousePointerClick, Users } from "lucide-react";
 
 import { useVisitorTrackingSnapshot } from "@/lib/visitor-tracking";
 
@@ -60,9 +55,7 @@ export function FooterStats({
           )}
           <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
         </span>
-        <h3 className="text-[11px] font-bold text-muted-foreground">
-          {title}
-        </h3>
+        <h3 className="text-[11px] font-bold text-muted-foreground">{title}</h3>
       </div>
       <div className="grid grid-cols-4 gap-2">
         {quickStats.map((stat) => (

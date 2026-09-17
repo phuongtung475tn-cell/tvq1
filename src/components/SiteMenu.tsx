@@ -48,7 +48,9 @@ export function SiteMenu({
     <>
       <div className="hidden items-center gap-1 rounded-full border border-border/70 bg-muted/60 p-1 xl:flex">
         {pages.map((page) => {
-          const isActive = activePageId ? page.id === activePageId : page.path === "";
+          const isActive = activePageId
+            ? page.id === activePageId
+            : page.path === "";
           return (
             <Link
               key={page.id}
