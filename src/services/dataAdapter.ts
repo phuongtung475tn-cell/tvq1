@@ -592,9 +592,29 @@ export async function isDuplicateLeadRemote(
   }
 }
 
-export function clearLeads(): void {
-  if (!isBrowser()) return;
+export async function clearLeads(config?: SiteConfig): Promise<boolean> {
+  if (!isBrowser()) return false;
+  if (config?.admin.storageMode === "database") {
+    try {
+      const response = await fetch(
+        `${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/rpc/clear_funnel_leads`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: config.admin.supabaseAnonKey,
+            Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`,
+          },
+          body: "{}",
+        },
+      );
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
   window.localStorage.removeItem(LEADS_KEY);
+  return true;
 }
 
 /**
@@ -972,15 +992,41 @@ export function trackConversion(source: string, variant?: string): void {
   saveAnalytics(a);
 }
 
-export function clearAnalytics(): void {
-  if (!isBrowser()) return;
-  if (loadConfig().admin.storageMode === "database") return;
+export async function clearAnalytics(config?: SiteConfig): Promise<boolean> {
+  if (!isBrowser()) return false;
+  if (config?.admin.storageMode === "database") {
+    try {
+      const response = await fetch(
+        `${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/rpc/reset_funnel_analytics`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: config.admin.supabaseAnonKey,
+            Authorization: `Bearer ${bearer(config.admin.supabaseAnonKey)}`,
+          },
+          body: "{}",
+        },
+      );
+      if (!response.ok) return false;
+      cloudAnalyticsState = emptyAnalytics();
+      window.dispatchEvent(
+        new CustomEvent<AnalyticsState>(ANALYTICS_UPDATED_EVENT, {
+          detail: emptyAnalytics(),
+        }),
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
   window.localStorage.removeItem(ANALYTICS_KEY);
   window.dispatchEvent(
     new CustomEvent<AnalyticsState>(ANALYTICS_UPDATED_EVENT, {
       detail: emptyAnalytics(),
     }),
   );
+  return true;
 }
 
 /* ------------------------------- SUPABASE --------------------------------- */

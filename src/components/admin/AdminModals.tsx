@@ -1319,6 +1319,7 @@ function WebhookModal({ onClose }: ModalProps) {
 function AnalyticsModal({ onClose }: ModalProps) {
   const { config } = useSiteConfig();
   const [a, setA] = useState<AnalyticsState | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
   useEffect(() => {
     const refresh = () => setA(loadAnalytics());
     refresh();
@@ -1343,16 +1344,29 @@ function AnalyticsModal({ onClose }: ModalProps) {
       <div className="mb-3 flex justify-end">
         <button
           type="button"
-          onClick={() => {
+          onClick={async () => {
             if (
-              window.confirm("Xóa toàn bộ số liệu Analytics trên thiết bị này?")
+              window.confirm(
+                config.admin.storageMode === "database"
+                  ? "Xóa toàn bộ số liệu Analytics trên Supabase?"
+                  : "Xóa toàn bộ số liệu Analytics trên thiết bị này?",
+              )
             )
-              clearAnalytics();
+              setActionMessage(
+                (await clearAnalytics(config))
+                  ? "Đã reset analytics trên Supabase."
+                  : "Không thể reset analytics. Kiểm tra quyền Supabase.",
+              );
           }}
           className="rounded-lg border border-red-200 px-3 py-1.5 text-[11px] font-bold text-red-600"
         >
           Xóa số liệu test
         </button>
+        {actionMessage && (
+          <p className="mb-2 text-center text-[11px] font-semibold text-sky-700">
+            {actionMessage}
+          </p>
+        )}
       </div>
       <div className="grid grid-cols-3 gap-2">
         <Stat label="Lượt truy cập" value={a?.visits ?? 0} />
@@ -1421,6 +1435,7 @@ function LeadsModal({ onClose }: ModalProps) {
   const { config } = useSiteConfig();
   const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [q, setQ] = useState("");
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const refresh = () => {
@@ -1503,10 +1518,21 @@ function LeadsModal({ onClose }: ModalProps) {
           + Lead thử
         </button>
         <button
-          onClick={() => {
-            if (window.confirm("Xoá toàn bộ lead đã lưu trên máy này?")) {
-              clearLeads();
-              setLeads([]);
+          onClick={async () => {
+            if (
+              window.confirm(
+                config.admin.storageMode === "database"
+                  ? "Xóa toàn bộ lead trên Supabase?"
+                  : "Xoá toàn bộ lead đã lưu trên máy này?",
+              )
+            ) {
+              const cleared = await clearLeads(config);
+              setActionMessage(
+                cleared
+                  ? "Đã xóa dữ liệu lead trên Supabase."
+                  : "Không thể xóa lead. Kiểm tra quyền Supabase.",
+              );
+              if (cleared) setLeads([]);
             }
           }}
           disabled={leads.length === 0}
@@ -1516,6 +1542,11 @@ function LeadsModal({ onClose }: ModalProps) {
         </button>
       </div>
 
+      {actionMessage && (
+        <p className="mb-2 text-center text-[11px] font-semibold text-sky-700">
+          {actionMessage}
+        </p>
+      )}
       <TextInput
         value={q}
         onChange={(e) => setQ(e.target.value)}
@@ -4179,7 +4210,7 @@ function SaveHint() {
           setMessage(
             saved
               ? "Đã lưu lên Supabase."
-              : "Chưa lưu được. Hãy nhập email/mật khẩu Supabase Auth và lưu trong nhóm Storage.",
+              : "Chưa lưu được. Kiểm tra phiên đăng nhập Supabase và quyền admin_users trong Storage.",
           );
         }}
         className={`w-full rounded-lg py-2.5 text-sm font-bold ${
