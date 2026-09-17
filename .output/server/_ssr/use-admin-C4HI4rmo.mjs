@@ -2,7 +2,7 @@ import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-Cdal7T4f.
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
 import { C as signInWithSupabase, f as getSupabaseAccessToken, s as clearSupabaseAccessToken } from "./use-site-config-DtkthIA3.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/use-admin-cPQ3CLQR.js
+//#region node_modules/.nitro/vite/services/ssr/assets/use-admin-C4HI4rmo.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var AUTH_KEY = "funnel_admin_authed_v1";
@@ -76,8 +76,16 @@ function AdminProvider({ children }) {
 			"TSS_ROUTER_BASEPATH": "",
 			"TSS_SERVER_FN_BASE": "/_serverFn/"
 		}["VITE_SUPABASE_ADMIN_EMAIL"]?.trim() || "";
-		const cloudLogin = await signInWithSupabase(supabaseUrl, supabaseAnonKey, email, password);
 		const localLogin = password === LEGACY_BOOTSTRAP_PASSWORD || !supabaseUrl && password === expected;
+		if (localLogin) {
+			setAuthed(true);
+			try {
+				window.sessionStorage.setItem(AUTH_KEY, "1");
+				window.sessionStorage.setItem(BOOTSTRAP_KEY, "1");
+			} catch {}
+			return true;
+		}
+		const cloudLogin = await signInWithSupabase(supabaseUrl, supabaseAnonKey, email, password);
 		if (cloudLogin || localLogin) {
 			setAuthed(true);
 			try {

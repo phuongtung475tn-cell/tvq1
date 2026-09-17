@@ -123,15 +123,25 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         supabaseAdminEmail?.trim() ||
         env["VITE_SUPABASE_ADMIN_EMAIL"]?.trim() ||
         "";
+      const localLogin =
+        password === LEGACY_BOOTSTRAP_PASSWORD ||
+        (!supabaseUrl && password === expected);
+      if (localLogin) {
+        setAuthed(true);
+        try {
+          window.sessionStorage.setItem(AUTH_KEY, "1");
+          window.sessionStorage.setItem(BOOTSTRAP_KEY, "1");
+        } catch {
+          /* ignore */
+        }
+        return true;
+      }
       const cloudLogin = await signInWithSupabase(
         supabaseUrl,
         supabaseAnonKey,
         email,
         password,
       );
-      const localLogin =
-        password === LEGACY_BOOTSTRAP_PASSWORD ||
-        (!supabaseUrl && password === expected);
       if (cloudLogin || localLogin) {
         setAuthed(true);
         try {

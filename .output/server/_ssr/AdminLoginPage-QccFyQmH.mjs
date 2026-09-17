@@ -2,9 +2,9 @@ import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-Cdal7T4f.
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
 import { D as useSiteConfig } from "./use-site-config-DtkthIA3.mjs";
-import { n as useAdmin } from "./use-admin-cPQ3CLQR.mjs";
+import { n as useAdmin } from "./use-admin-C4HI4rmo.mjs";
 import { C as Lock } from "../_libs/lucide-react.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/AdminLoginPage-DmGJHhya.js
+//#region node_modules/.nitro/vite/services/ssr/assets/AdminLoginPage-QccFyQmH.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 /** Màn hình đăng nhập quản trị — dùng cho /admin và đường dẫn tuỳ chỉnh. */
