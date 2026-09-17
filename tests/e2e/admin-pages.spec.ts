@@ -1,13 +1,25 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+const adminEmail = process.env["E2E_ADMIN_EMAIL"];
+const adminPassword = process.env["E2E_ADMIN_PASSWORD"];
+
+test.skip(
+  !adminEmail || !adminPassword,
+  "Set E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD for cloud admin E2E tests.",
+);
+
+async function loginAsAdmin(page: Page) {
+  await page.goto("/admin");
+  await page.getByPlaceholder("Email Supabase Auth").fill(adminEmail ?? "");
+  await page.getByPlaceholder("Mật khẩu quản trị").fill(adminPassword ?? "");
+  await page.getByRole("button", { name: "Đăng nhập" }).click();
+  await expect(page).toHaveURL(/\/$/);
+}
 
 test("admin can create a secondary page and keep its section scoped", async ({
   page,
 }) => {
-  await page.goto("/admin");
-  await page.getByPlaceholder("Mật khẩu quản trị").fill("duhoc2026");
-  await page.getByRole("button", { name: "Đăng nhập" }).click();
-
-  await expect(page).toHaveURL(/\/$/);
+  await loginAsAdmin(page);
   await page.getByRole("button", { name: /Xem trước: BẬT/ }).click();
   await expect(page.getByRole("button", { name: "Đa Trang" })).toBeVisible();
   await page.getByRole("button", { name: "Đa Trang" }).click();
@@ -46,11 +58,7 @@ test("admin can create a secondary page and keep its section scoped", async ({
 test("admin guide health modal shows readiness summary and checklist", async ({
   page,
 }) => {
-  await page.goto("/admin");
-  await page.getByPlaceholder("Mật khẩu quản trị").fill("duhoc2026");
-  await page.getByRole("button", { name: "Đăng nhập" }).click();
-
-  await expect(page).toHaveURL(/\/$/);
+  await loginAsAdmin(page);
   await page.getByRole("button", { name: /Xem trước: BẬT/ }).click();
   await page.getByRole("button", { name: "Hướng Dẫn & Health" }).click();
 

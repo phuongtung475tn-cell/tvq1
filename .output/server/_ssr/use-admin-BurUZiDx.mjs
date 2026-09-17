@@ -1,13 +1,11 @@
 import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-Cdal7T4f.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { C as signInWithSupabase, f as getSupabaseAccessToken, s as clearSupabaseAccessToken } from "./use-site-config-DtkthIA3.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/use-admin-C4HI4rmo.js
+import { C as signInWithSupabase, f as getSupabaseAccessToken, s as clearSupabaseAccessToken } from "./use-site-config-CxFNRWjt.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/use-admin-BurUZiDx.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var AUTH_KEY = "funnel_admin_authed_v1";
-var BOOTSTRAP_KEY = "funnel_admin_bootstrap_v1";
-var LEGACY_BOOTSTRAP_PASSWORD = "duhoc2026";
 var DEFAULT_DEVICE_SIZES = {
 	mobile: {
 		width: 375,
@@ -31,20 +29,7 @@ function AdminProvider({ children }) {
 	const [previewEnabled, setPreviewEnabledState] = (0, import_react.useState)(true);
 	(0, import_react.useEffect)(() => {
 		try {
-			setAuthed(window.sessionStorage.getItem(AUTH_KEY) === "1" && (Boolean(getSupabaseAccessToken()) || window.sessionStorage.getItem(BOOTSTRAP_KEY) === "1" || !{
-				"BASE_URL": "/",
-				"DEV": false,
-				"MODE": "production",
-				"PROD": true,
-				"SSR": true,
-				"TSS_DEV_SERVER": "false",
-				"TSS_DEV_SSR_STYLES_BASEPATH": "/",
-				"TSS_DEV_SSR_STYLES_ENABLED": "true",
-				"TSS_DISABLE_CSRF_MIDDLEWARE_WARNING": "false",
-				"TSS_INLINE_CSS_ENABLED": "false",
-				"TSS_ROUTER_BASEPATH": "",
-				"TSS_SERVER_FN_BASE": "/_serverFn/"
-			}["VITE_SUPABASE_URL"]));
+			setAuthed(window.sessionStorage.getItem(AUTH_KEY) === "1" && Boolean(getSupabaseAccessToken()));
 		} catch {}
 	}, []);
 	const setDeviceSize = (0, import_react.useCallback)((view, size) => {
@@ -61,7 +46,7 @@ function AdminProvider({ children }) {
 	const setPreviewEnabled = (0, import_react.useCallback)((enabled) => {
 		setPreviewEnabledState(enabled);
 	}, []);
-	const login = (0, import_react.useCallback)(async (password, expected, supabaseUrl = "", supabaseAnonKey = "", supabaseAdminEmail = "") => {
+	const login = (0, import_react.useCallback)(async (password, _expected, supabaseUrl = "", supabaseAnonKey = "", supabaseAdminEmail = "") => {
 		const email = supabaseAdminEmail?.trim() || {
 			"BASE_URL": "/",
 			"DEV": false,
@@ -76,21 +61,10 @@ function AdminProvider({ children }) {
 			"TSS_ROUTER_BASEPATH": "",
 			"TSS_SERVER_FN_BASE": "/_serverFn/"
 		}["VITE_SUPABASE_ADMIN_EMAIL"]?.trim() || "";
-		const localLogin = password === LEGACY_BOOTSTRAP_PASSWORD || !supabaseUrl && password === expected;
-		if (localLogin) {
+		if (await signInWithSupabase(supabaseUrl, supabaseAnonKey, email, password)) {
 			setAuthed(true);
 			try {
 				window.sessionStorage.setItem(AUTH_KEY, "1");
-				window.sessionStorage.setItem(BOOTSTRAP_KEY, "1");
-			} catch {}
-			return true;
-		}
-		const cloudLogin = await signInWithSupabase(supabaseUrl, supabaseAnonKey, email, password);
-		if (cloudLogin || localLogin) {
-			setAuthed(true);
-			try {
-				window.sessionStorage.setItem(AUTH_KEY, "1");
-				if (localLogin && !cloudLogin) window.sessionStorage.setItem(BOOTSTRAP_KEY, "1");
 			} catch {}
 			return true;
 		}
@@ -101,7 +75,6 @@ function AdminProvider({ children }) {
 		setActiveModal(null);
 		try {
 			window.sessionStorage.removeItem(AUTH_KEY);
-			window.sessionStorage.removeItem(BOOTSTRAP_KEY);
 			clearSupabaseAccessToken();
 		} catch {}
 	}, []);

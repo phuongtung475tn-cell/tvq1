@@ -273,7 +273,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
     storageMode: "database",
     supabaseUrl: "https://trkdtkrnukfvvcopiwlp.supabase.co",
     supabaseAnonKey: "sb_publishable_hajPAFQZ0SiziA8IdANyGw_2oXBlZST",
-    supabaseAdminEmail: "",
+    supabaseAdminEmail: "phuongtung475.tn@gmail.com",
     backupEmail: "",
     cronSchedule: "off",
     backupCronToken: "",

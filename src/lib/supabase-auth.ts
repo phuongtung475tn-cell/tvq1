@@ -4,8 +4,14 @@ function tokenIsExpired(token: string): boolean {
   try {
     const payload = token.split(".")[1];
     if (!payload) return false;
+    const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
     const claims = JSON.parse(
-      atob(payload.replace(/-/g, "+").replace(/_/g, "/")),
+      atob(
+        normalizedPayload.padEnd(
+          Math.ceil(normalizedPayload.length / 4) * 4,
+          "=",
+        ),
+      ),
     ) as {
       exp?: unknown;
     };

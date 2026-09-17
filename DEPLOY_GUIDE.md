@@ -11,7 +11,7 @@ Dự án dùng **TanStack Start (React + Vite)**. Có 2 cách chạy:
 ## 0. Yêu cầu
 
 - Node.js 18+ và npm.
-- Tài khoản Supabase Cloud và biến môi trường `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+- Tài khoản Supabase Cloud và biến môi trường `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SUPABASE_ADMIN_EMAIL`.
 - (Tùy chọn) Khóa Resend `RESEND_API_KEY` nếu muốn gửi email tự động.
 
 Cài dependency và chạy thử local:
@@ -34,6 +34,8 @@ npm run build    # tạo bản build production
    - `VITE_SUPABASE_ANON_KEY` — publishable/anon key, không dùng service role key.
    - `VITE_SUPABASE_ADMIN_EMAIL` — email của user quản trị đã tạo trong Supabase Auth.
 4. Bấm **Deploy**. Xong.
+
+Sau khi thay đổi biến môi trường, cần redeploy để Vite đưa cấu hình mới vào bản build.
 
 > Form lead, CRM cloud và webhook relay cần deployment có SSR như Vercel.
 > Không dùng bản static cho production nếu cần nhận lead tập trung.
@@ -90,11 +92,20 @@ npm run build    # tạo bản build production
 Dùng để cấu hình, lead và analytics đồng bộ nhiều thiết bị. Database Mode không ghi dữ liệu nghiệp vụ vào localStorage.
 
 1. Tạo project tại [supabase.com](https://supabase.com).
-2. Trong SQL Editor, chạy `supabase/funnel_configs.sql` và `supabase/visitor_tracking.sql`.
-   Nếu cần nhập tay, tối thiểu tạo các bảng `funnel_configs`, `leads`, `visitor_sessions`
-   với các cột tracking/CRM tương ứng để Database Mode lưu được lead + phiên truy cập.
-3. Tạo user quản trị trong Supabase Auth, bật RLS và chạy đúng policy trong SQL ở trên. Các thao tác quản trị cấu hình/analytics phải chạy bằng Supabase Auth (`authenticated`); không mở lại policy ghi cho `anon`.
-4. Cấu hình `VITE_SUPABASE_URL` và `VITE_SUPABASE_ANON_KEY` trong môi trường build rồi deploy lại. Không lưu service role key ở frontend.
+2. Trong SQL Editor, chạy lần lượt `supabase/funnel_configs.sql`, `supabase/leads.sql`, `supabase/visitor_tracking.sql`, rồi `supabase/admin_users.sql`. Hoặc chạy file tổng hợp `supabase-funnel-2026-09-17.sql` một lần.
+3. Vào **Authentication → Users → Add user**, tạo tài khoản email/mật khẩu quản trị. Nếu bật **Confirm email**, phải xác nhận email trước lần đăng nhập đầu tiên.
+4. Chạy lại đoạn `insert into public.admin_users ...` trong `supabase/admin_users.sql` sau khi user đã tồn tại, hoặc thay email trong câu SQL bằng email thực tế của admin. Kiểm tra user có một dòng `enabled = true` trong `public.admin_users`.
+5. Trong Vercel đặt `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` và `VITE_SUPABASE_ADMIN_EMAIL`. Chỉ dùng publishable/anon key ở frontend; tuyệt đối không dùng service role key.
+6. Redeploy rồi mở `/admin`. Đăng nhập bằng email Supabase Auth và mật khẩu của user, không dùng mật khẩu admin cũ trong mã nguồn.
+
+Kiểm tra nhanh trong Supabase sau khi đăng nhập:
+
+```sql
+select user_id, email, role, enabled from public.admin_users;
+select count(*) from public.leads;
+```
+
+Nếu đăng nhập thành công nhưng danh sách lead trống hoặc báo 401/403, kiểm tra policy `admins can read leads` và xem Network request tới `/rest/v1/leads` có `Authorization: Bearer <access_token>`.
 
 ---
 
@@ -126,8 +137,26 @@ Phải nhận HTTP `200 Backup sent`. Nếu nhận `503`, kiểm tra đủ biế
 ## E. Checklist sau khi deploy
 
 - [ ] Trang chủ mở được qua HTTPS.
+- [ ] Supabase Auth có user admin và `public.admin_users.enabled = true`.
+- [ ] `/admin` đăng nhập được bằng email/mật khẩu Supabase Auth; refresh trang vẫn giữ phiên tới khi token hết hạn.
+- [ ] Admin đọc được `leads` sau khi đăng nhập, không dùng service role key trên trình duyệt.
+- [ ] Lưu một thay đổi cấu hình và kiểm tra `funnel_configs.id = 1` cập nhật trên Supabase.
 - [ ] Gửi thử form → kiểm tra lead xuất hiện trong **Admin → 📋 Quản Lý Lead**.
 - [ ] Webhook (Make/Telegram/Sheets) nhận được dữ liệu.
 - [ ] Pixel Facebook/TikTok/GA4 bắn sự kiện `PageView` và `Lead`.
 - [ ] Đổi mật khẩu & đường dẫn Admin (mục **🔑 Đổi Link Admin**) khỏi giá trị mặc định.
 - [ ] Cập nhật `public/sitemap.xml` và `public/robots.txt` theo domain thật.
+
+### Kiểm tra tự động
+
+Lint toàn bộ repo hiện còn một số lỗi Prettier tồn tại ở các component không liên quan. Kiểm tra riêng phần auth:
+
+```bash
+npx eslint src/lib/supabase-auth.ts src/components/admin/AdminLoginPage.tsx
+```
+
+Chạy E2E cloud sau khi đã tạo user test:
+
+```bash
+E2E_ADMIN_EMAIL=admin@example.com E2E_ADMIN_PASSWORD='mat-khau-test' npm exec playwright test tests/e2e/admin-pages.spec.ts
+```

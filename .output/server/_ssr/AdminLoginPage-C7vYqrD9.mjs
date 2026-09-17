@@ -1,35 +1,50 @@
 import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-Cdal7T4f.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { D as useSiteConfig } from "./use-site-config-DtkthIA3.mjs";
-import { n as useAdmin } from "./use-admin-C4HI4rmo.mjs";
+import { D as useSiteConfig } from "./use-site-config-CxFNRWjt.mjs";
+import { n as useAdmin } from "./use-admin-BurUZiDx.mjs";
 import { C as Lock } from "../_libs/lucide-react.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/AdminLoginPage-QccFyQmH.js
+//#region node_modules/.nitro/vite/services/ssr/assets/AdminLoginPage-C7vYqrD9.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 /** Màn hình đăng nhập quản trị — dùng cho /admin và đường dẫn tuỳ chỉnh. */
 function AdminLoginPage() {
 	const { authed, login } = useAdmin();
 	const { config, ready: configReady } = useSiteConfig();
+	const envEmail = {
+		"BASE_URL": "/",
+		"DEV": false,
+		"MODE": "production",
+		"PROD": true,
+		"SSR": true,
+		"TSS_DEV_SERVER": "false",
+		"TSS_DEV_SSR_STYLES_BASEPATH": "/",
+		"TSS_DEV_SSR_STYLES_ENABLED": "true",
+		"TSS_DISABLE_CSRF_MIDDLEWARE_WARNING": "false",
+		"TSS_INLINE_CSS_ENABLED": "false",
+		"TSS_ROUTER_BASEPATH": "",
+		"TSS_SERVER_FN_BASE": "/_serverFn/"
+	}["VITE_SUPABASE_ADMIN_EMAIL"]?.trim() || "";
 	const [password, setPassword] = (0, import_react.useState)("");
-	const [email, setEmail] = (0, import_react.useState)(config.admin.supabaseAdminEmail);
+	const [email, setEmail] = (0, import_react.useState)(config.admin.supabaseAdminEmail || envEmail);
 	const [supabaseUrl, setSupabaseUrl] = (0, import_react.useState)(config.admin.supabaseUrl);
 	const [supabaseKey, setSupabaseKey] = (0, import_react.useState)(config.admin.supabaseAnonKey);
 	const [error, setError] = (0, import_react.useState)("");
 	const passwordInputRef = (0, import_react.useRef)(null);
 	(0, import_react.useEffect)(() => {
-		setEmail(config.admin.supabaseAdminEmail);
+		setEmail(config.admin.supabaseAdminEmail || envEmail);
 		setSupabaseUrl(config.admin.supabaseUrl);
 		setSupabaseKey(config.admin.supabaseAnonKey);
 	}, [
 		config.admin.supabaseAdminEmail,
+		envEmail,
 		config.admin.supabaseUrl,
 		config.admin.supabaseAnonKey
 	]);
 	async function handleSubmit() {
 		const nextPassword = passwordInputRef.current?.value ?? password;
 		if (await login(nextPassword, config.admin.password, supabaseUrl, supabaseKey, email)) window.location.assign("/");
-		else setError("Không xác thực được. Hãy kiểm tra user Supabase Auth; mật khẩu local duhoc2026 chỉ mở phiên bootstrap và chưa cấp quyền ghi cloud.");
+		else setError("Không xác thực được. Email phải là user Supabase Auth và được cấp quyền trong admin_users.");
 	}
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("main", {
 		className: "flex min-h-screen items-center justify-center bg-neutral-950 px-4 text-white",

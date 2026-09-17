@@ -3,7 +3,7 @@ import { c as createServerFn, i as TSS_SERVER_FUNCTION } from "./createServerFn-
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
 import { a as unknownType, i as stringType, n as objectType, r as recordType } from "../_libs/zod.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-DtkthIA3.js
+//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-CxFNRWjt.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var DEFAULT_CONFIG = {
@@ -13,7 +13,7 @@ var DEFAULT_CONFIG = {
 		storageMode: "database",
 		supabaseUrl: "https://trkdtkrnukfvvcopiwlp.supabase.co",
 		supabaseAnonKey: "sb_publishable_hajPAFQZ0SiziA8IdANyGw_2oXBlZST",
-		supabaseAdminEmail: "",
+		supabaseAdminEmail: "phuongtung475.tn@gmail.com",
 		backupEmail: "",
 		cronSchedule: "off",
 		backupCronToken: ""
@@ -548,13 +548,29 @@ var relaySchema = objectType({
 });
 var relayWebhook = createServerFn({ method: "POST" }).validator((data) => relaySchema.parse(data)).handler(createSsrRpc("95e6712f6ffd450a883eaa218493fa3addd9c46fc4e357a506533ee0a8508e68"));
 var ACCESS_TOKEN_KEY = "funnel_supabase_access_token_v1";
+function tokenIsExpired(token) {
+	try {
+		const payload = token.split(".")[1];
+		if (!payload) return false;
+		const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+		const claims = JSON.parse(atob(normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, "=")));
+		return typeof claims.exp === "number" && claims.exp <= Math.floor(Date.now() / 1e3);
+	} catch {
+		return false;
+	}
+}
 function isBrowser$1() {
 	return typeof window !== "undefined";
 }
 function getSupabaseAccessToken() {
 	if (!isBrowser$1()) return "";
 	try {
-		return window.sessionStorage.getItem(ACCESS_TOKEN_KEY) || "";
+		const token = window.sessionStorage.getItem(ACCESS_TOKEN_KEY) || "";
+		if (token && tokenIsExpired(token)) {
+			window.sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+			return "";
+		}
+		return token;
 	} catch {
 		return "";
 	}
@@ -582,6 +598,20 @@ async function signInWithSupabase(url, anonKey, email, password) {
 		if (!response.ok) return false;
 		const payload = await response.json();
 		if (typeof payload.access_token !== "string" || !payload.access_token) return false;
+		const userResponse = await fetch(`${url.replace(/\/$/, "")}/auth/v1/user`, { headers: {
+			apikey: anonKey,
+			Authorization: `Bearer ${payload.access_token}`
+		} });
+		if (!userResponse.ok) return false;
+		const user = await userResponse.json();
+		if (typeof user.id !== "string" || !user.id) return false;
+		const adminResponse = await fetch(`${url.replace(/\/$/, "")}/rest/v1/admin_users?user_id=eq.${encodeURIComponent(user.id)}&enabled=eq.true&select=user_id&limit=1`, { headers: {
+			apikey: anonKey,
+			Authorization: `Bearer ${payload.access_token}`
+		} });
+		if (!adminResponse.ok) return false;
+		const admins = await adminResponse.json();
+		if (!Array.isArray(admins) || admins.length === 0) return false;
 		window.sessionStorage.setItem(ACCESS_TOKEN_KEY, payload.access_token);
 		return true;
 	} catch {
