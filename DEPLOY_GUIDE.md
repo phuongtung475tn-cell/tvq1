@@ -43,7 +43,8 @@ cp .env.example .env
 2. Vào Vercel → **New Project** → chọn repo → framework tự nhận **TanStack Start**.
 3. Thêm biến môi trường (Project → Settings → Environment Variables):
    - `RESEND_API_KEY` — nếu bật Auto Email.
-   - `RESEND_FROM_EMAIL` — địa chỉ From thuộc domain đã xác minh trên Resend.
+   - `RESEND_FROM_EMAIL` — địa chỉ From thuộc domain đã xác minh trên Resend;
+     test nhanh có thể dùng `onboarding@resend.dev`.
    - `VITE_SUPABASE_URL` — URL public của project Supabase.
    - `VITE_SUPABASE_ANON_KEY` — publishable/anon key, không dùng service role key.
    - `VITE_SUPABASE_ADMIN_EMAIL` — email của user quản trị đã tạo trong Supabase Auth.
@@ -58,17 +59,17 @@ Sau khi thay đổi biến môi trường, cần redeploy để Vite đưa cấu
 
 ### A1. Bảng biến môi trường
 
-| Biến | Nơi đặt | Bắt buộc | Ghi chú |
-|---|---|---:|---|
-| `VITE_SUPABASE_URL` | Vercel Production/Preview | Có | Project URL, ví dụ `https://project-ref.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | Vercel Production/Preview | Có | Publishable/anon key, được phép xuất hiện trong frontend nhưng vẫn cần RLS |
-| `VITE_SUPABASE_ADMIN_EMAIL` | Vercel Production/Preview | Có | Email user đã có trong `admin_users` |
-| `SUPABASE_URL` | Vercel server-only | Chỉ backup | Không có tiền tố `VITE_` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Vercel server-only | Chỉ backup | Tuyệt đối không đưa vào browser/Git |
-| `RESEND_API_KEY` | Vercel server-only | Tùy chọn | Dùng email server |
-| `RESEND_FROM_EMAIL` | Vercel server-only | Tùy chọn | From đã xác minh trên Resend; dùng cho auto email nếu Admin không nhập From |
-| `BACKUP_FROM_EMAIL` | Vercel server-only | Tùy chọn | Domain/email đã xác minh trên Resend |
-| `BACKUP_CRON_TOKEN` | Vercel server-only | Tùy chọn | Token ngẫu nhiên, không lưu trong config cloud |
+| Biến                        | Nơi đặt                   |   Bắt buộc | Ghi chú                                                                     |
+| --------------------------- | ------------------------- | ---------: | --------------------------------------------------------------------------- |
+| `VITE_SUPABASE_URL`         | Vercel Production/Preview |         Có | Project URL, ví dụ `https://project-ref.supabase.co`                        |
+| `VITE_SUPABASE_ANON_KEY`    | Vercel Production/Preview |         Có | Publishable/anon key, được phép xuất hiện trong frontend nhưng vẫn cần RLS  |
+| `VITE_SUPABASE_ADMIN_EMAIL` | Vercel Production/Preview |         Có | Email user đã có trong `admin_users`                                        |
+| `SUPABASE_URL`              | Vercel server-only        | Chỉ backup | Không có tiền tố `VITE_`                                                    |
+| `SUPABASE_SERVICE_ROLE_KEY` | Vercel server-only        | Chỉ backup | Tuyệt đối không đưa vào browser/Git                                         |
+| `RESEND_API_KEY`            | Vercel server-only        |   Tùy chọn | Dùng email server                                                           |
+| `RESEND_FROM_EMAIL`         | Vercel server-only        |   Tùy chọn | From đã xác minh trên Resend; dùng cho auto email nếu Admin không nhập From |
+| `BACKUP_FROM_EMAIL`         | Vercel server-only        |   Tùy chọn | Domain/email đã xác minh trên Resend                                        |
+| `BACKUP_CRON_TOKEN`         | Vercel server-only        |   Tùy chọn | Token ngẫu nhiên, không lưu trong config cloud                              |
 
 Sau khi thêm hoặc đổi bất kỳ biến nào, chọn **Redeploy**. Vite chỉ inject biến
 `VITE_*` trong lúc build; reload trang không đủ để nhận giá trị mới.
@@ -197,9 +198,9 @@ Phải nhận HTTP `200 Backup sent`. Nếu nhận `503`, kiểm tra đủ biế
 1. Vào **Vercel → Project → Settings → Domains → Add**.
 2. Nhập domain chính, ví dụ `www.example.com` hoặc `example.com`.
 3. Tại nhà cung cấp DNS, tạo đúng bản ghi Vercel hiển thị trong màn hình Domain.
-    Thông thường:
-    - Domain gốc: `A @ 76.76.21.21`.
-    - Subdomain: `CNAME www cname.vercel-dns.com`.
+   Thông thường:
+   - Domain gốc: `A @ 76.76.21.21`.
+   - Subdomain: `CNAME www cname.vercel-dns.com`.
 4. Xóa bản ghi A/CNAME cũ trỏ sang hosting khác nếu gây conflict.
 5. Chờ DNS propagation và xem trạng thái **Valid Configuration** trên Vercel.
 

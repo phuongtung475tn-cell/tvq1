@@ -903,6 +903,16 @@ function EmailModal({ onClose }: ModalProps) {
   const [testTo, setTestTo] = useState("");
   const validFrom = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.fromEmail);
   const canUseServerFrom = e.provider === "resend" && !e.fromEmail.trim();
+  const fromDomain = e.fromEmail.split("@").pop()?.toLowerCase() || "";
+  const blockedFromDomain = [
+    "gmail.com",
+    "googlemail.com",
+    "yahoo.com",
+    "outlook.com",
+    "hotmail.com",
+    "live.com",
+    "icloud.com",
+  ].includes(fromDomain);
   return (
     <AdminModal
       title="Tự Động Hóa Email"
@@ -942,11 +952,13 @@ function EmailModal({ onClose }: ModalProps) {
       <p
         className={`mb-3 text-xs ${validFrom ? "text-emerald-600" : "text-amber-600"}`}
       >
-        {validFrom
-          ? "Địa chỉ From hợp lệ."
-          : canUseServerFrom
-            ? "Sẽ dùng RESEND_FROM_EMAIL hoặc BACKUP_FROM_EMAIL trên server."
-            : "Cần nhập email From hợp lệ."}
+        {blockedFromDomain
+          ? "Resend không cho dùng Gmail/Yahoo/Outlook làm From. Dùng onboarding@resend.dev hoặc domain đã xác minh."
+          : validFrom
+            ? "Địa chỉ From hợp lệ."
+            : canUseServerFrom
+              ? "Sẽ dùng RESEND_FROM_EMAIL hoặc BACKUP_FROM_EMAIL trên server."
+              : "Cần nhập email From hợp lệ."}
       </p>
       {e.provider === "resend" ? (
         <Field
@@ -1085,7 +1097,7 @@ function EmailModal({ onClose }: ModalProps) {
       <button
         type="button"
         disabled={
-          (!validFrom && !canUseServerFrom) ||
+          ((!validFrom || blockedFromDomain) && !canUseServerFrom) ||
           !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testTo) ||
           testState === "testing"
         }

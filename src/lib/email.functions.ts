@@ -95,6 +95,16 @@ function providerFailure(status: number, detail: string) {
   };
 }
 
+const FREE_EMAIL_DOMAINS = new Set([
+  "gmail.com",
+  "googlemail.com",
+  "yahoo.com",
+  "outlook.com",
+  "hotmail.com",
+  "live.com",
+  "icloud.com",
+]);
+
 export const sendLeadEmail = createServerFn({ method: "POST" })
   .validator((data) => schema.parse(data))
   .handler(async ({ data }) => {
@@ -109,6 +119,14 @@ export const sendLeadEmail = createServerFn({ method: "POST" })
     if (!from) return { sent: false, reason: "missing_from_email" as const };
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(from))
       return { sent: false, reason: "invalid_from_email" as const };
+    const fromDomain = from.slice(from.lastIndexOf("@") + 1).toLowerCase();
+    if (FREE_EMAIL_DOMAINS.has(fromDomain))
+      return {
+        sent: false,
+        reason: "unverified_from_domain" as const,
+        detail:
+          "Resend yêu cầu From thuộc domain đã xác minh; không dùng Gmail/Yahoo/Outlook làm From.",
+      };
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const res = await fetch("https://api.resend.com/emails", {
