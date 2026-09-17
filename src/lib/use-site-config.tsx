@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -24,6 +25,7 @@ interface SiteConfigContextValue {
   update: (patch: (draft: SiteConfig) => void) => void;
   /** Ghi xuống storage (localStorage / Supabase). */
   save: () => Promise<boolean>;
+  decrementCountdown: (leadId: string) => Promise<boolean>;
   /** Nạp lại cấu hình gốc từ src/config. */
   reset: () => void;
   resetLanding: () => void;
@@ -41,6 +43,12 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<SiteConfig>(DEFAULT_CONFIG);
   const [dirty, setDirty] = useState(false);
   const [ready, setReady] = useState(false);
+  const configRef = useRef(DEFAULT_CONFIG);
+  const handledCountdownLeads = useRef(new Set<string>());
+
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
 
   // Hydrate từ storage sau khi mount (tránh mismatch SSR).
   useEffect(() => {
@@ -67,6 +75,25 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
     if (saved) setDirty(false);
     return saved;
   }, [config]);
+
+  const decrementCountdown = useCallback(async (leadId: string) => {
+    if (handledCountdownLeads.current.has(leadId)) return true;
+    const current = configRef.current;
+    if (!current.countdown.enabled || current.countdown.slotsLeft <= 0)
+      return true;
+    handledCountdownLeads.current.add(leadId);
+    const nextConfig = structuredClone(current);
+    nextConfig.countdown.slotsLeft = Math.max(
+      0,
+      nextConfig.countdown.slotsLeft - 1,
+    );
+    configRef.current = nextConfig;
+    setConfig(nextConfig);
+    const saved = await saveConfig(nextConfig);
+    if (saved) setDirty(false);
+    else handledCountdownLeads.current.delete(leadId);
+    return saved;
+  }, []);
 
   const reset = useCallback(() => {
     setConfig(resetConfig());
@@ -102,6 +129,7 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
       config,
       update,
       save,
+      decrementCountdown,
       reset,
       resetLanding,
       exportFile,
@@ -113,6 +141,7 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
       config,
       update,
       save,
+      decrementCountdown,
       reset,
       resetLanding,
       exportFile,

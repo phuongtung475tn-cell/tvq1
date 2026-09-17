@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { useSiteConfig } from "@/lib/use-site-config";
-import { COUNTDOWN_DECREMENT_EVENT, saveConfig } from "@/services/dataAdapter";
-
-const handledLeadIds = new Set<string>();
+import { COUNTDOWN_DECREMENT_EVENT } from "@/services/dataAdapter";
 
 function endOfMonth() {
   const now = new Date();
@@ -24,7 +22,7 @@ function pad(n: number) {
 
 /** Đếm ngược + số suất còn lại, lấy trực tiếp từ cấu hình Admin. */
 export function ScarcityBar({ tone = "light" }: { tone?: "light" | "dark" }) {
-  const { config, update } = useSiteConfig();
+  const { config, decrementCountdown } = useSiteConfig();
   const c = config.countdown;
   const [left, setLeft] = useState<number | null>(null);
 
@@ -45,42 +43,20 @@ export function ScarcityBar({ tone = "light" }: { tone?: "light" | "dark" }) {
     if (!c.enabled || c.autoDecrement === false) return;
     const onLeadCreated = (event: Event) => {
       const leadId = (event as CustomEvent<{ leadId?: string }>).detail?.leadId;
-      if (!leadId || handledLeadIds.has(leadId) || c.slotsLeft <= 0) return;
-      handledLeadIds.add(leadId);
-      const nextConfig = structuredClone(config);
-      nextConfig.countdown.slotsLeft = Math.max(
-        0,
-        nextConfig.countdown.slotsLeft - 1,
-      );
-      update((draft) => {
-        draft.countdown.slotsLeft = nextConfig.countdown.slotsLeft;
-      });
-      void saveConfig(nextConfig);
+      if (!leadId) return;
+      void decrementCountdown(leadId);
     };
     window.addEventListener(COUNTDOWN_DECREMENT_EVENT, onLeadCreated);
     return () =>
       window.removeEventListener(COUNTDOWN_DECREMENT_EVENT, onLeadCreated);
-  }, [c.enabled, c.autoDecrement, c.slotsLeft, config, update]);
+  }, [c.enabled, c.autoDecrement, decrementCountdown]);
 
   const d = left === null ? 0 : Math.floor(left / 86400000);
   const h = left === null ? 0 : Math.floor((left % 86400000) / 3600000);
   const m = left === null ? 0 : Math.floor((left % 3600000) / 60000);
   const s = left === null ? 0 : Math.floor((left % 60000) / 1000);
 
-  const displaySlots = (() => {
-    if (!c.enabled) return c.slotsLeft;
-    const maxSlots = c.slotsLeft;
-    if (maxSlots <= 0) return 0;
-    // Số suất giảm dần theo thời gian: đầu kỳ gần maxSlots, cuối kỳ gần 1.
-    // totalSeconds giảm dần → ratio giảm → dynamic giảm.
-    const totalSeconds = d * 86400 + h * 3600 + m * 60 + s;
-    const ratio = Math.min(1, totalSeconds / (30 * 86400));
-    const fluctuation = Math.floor(
-      Math.sin(Date.now() / 300000) * 1.5 + Math.cos(Date.now() / 470000) * 1,
-    );
-    const dynamic = Math.round(maxSlots * (0.15 + ratio * 0.85)) + fluctuation;
-    return Math.max(1, Math.min(maxSlots, dynamic));
-  })();
+  const displaySlots = Math.max(0, c.slotsLeft);
 
   if (!c.enabled) return null;
 
