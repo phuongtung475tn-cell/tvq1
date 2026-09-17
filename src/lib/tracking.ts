@@ -119,11 +119,11 @@ export function fireTestEvent(): TestEventLog[] {
 
   if (typeof window.fbq === "function") {
     try {
-      window.fbq("trackCustom", "LovableTestEvent", payload);
+      window.fbq("trackCustom", "admin_test_event", payload);
       logs.push({
         channel: "Meta Pixel",
         ok: true,
-        detail: "Đã gửi LovableTestEvent",
+        detail: "Đã gửi admin_test_event",
       });
     } catch (e) {
       logs.push({ channel: "Meta Pixel", ok: false, detail: String(e) });
@@ -157,11 +157,11 @@ export function fireTestEvent(): TestEventLog[] {
 
   if (typeof window.gtag === "function") {
     try {
-      window.gtag("event", "lovable_test_event", payload);
+      window.gtag("event", "admin_test_event", payload);
       logs.push({
         channel: "Google Analytics 4",
         ok: true,
-        detail: "Đã gửi lovable_test_event",
+        detail: "Đã gửi admin_test_event",
       });
     } catch (e) {
       logs.push({
@@ -179,7 +179,7 @@ export function fireTestEvent(): TestEventLog[] {
   }
 
   if (Array.isArray(window.dataLayer)) {
-    pushDataLayer({ event: "lovable_test_event", ...payload });
+    pushDataLayer({ event: "admin_test_event", ...payload });
     logs.push({
       channel: "GTM dataLayer",
       ok: true,
