@@ -19,6 +19,9 @@ $$;
 revoke all on function public.is_funnel_admin() from public;
 grant execute on function public.is_funnel_admin() to authenticated;
 
+drop policy if exists "funnel analytics can be written" on public.funnel_analytics;
+drop policy if exists "funnel analytics can be updated" on public.funnel_analytics;
+
 do $$
 declare
   policy_record record;
@@ -28,7 +31,7 @@ begin
     from pg_policies
     where schemaname = 'public'
       and tablename = 'funnel_analytics'
-      and cmd in ('a', 'w', '*')
+      and cmd in ('INSERT', 'UPDATE', 'ALL', 'a', 'w', '*')
   loop
     execute format(
       'drop policy if exists %I on public.funnel_analytics',
