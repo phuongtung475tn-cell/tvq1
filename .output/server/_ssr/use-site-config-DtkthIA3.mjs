@@ -3,7 +3,7 @@ import { c as createServerFn, i as TSS_SERVER_FUNCTION } from "./createServerFn-
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
 import { a as unknownType, i as stringType, n as objectType, r as recordType } from "../_libs/zod.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-C6pC4bLh.js
+//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-DtkthIA3.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var DEFAULT_CONFIG = {
@@ -697,7 +697,7 @@ function preserveLocalSecrets(merged, local) {
 	const env = configuredSupabase();
 	merged.admin.supabaseUrl = env.url || local.admin.supabaseUrl;
 	merged.admin.supabaseAnonKey = env.key || local.admin.supabaseAnonKey;
-	merged.admin.supabaseAdminEmail = local.admin.supabaseAdminEmail;
+	merged.admin.supabaseAdminEmail = merged.admin.supabaseAdminEmail || local.admin.supabaseAdminEmail;
 	merged.admin.password = "";
 	merged.admin.storageMode = "database";
 	merged.admin.backupCronToken = local.admin.backupCronToken;

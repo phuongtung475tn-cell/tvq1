@@ -4170,10 +4170,18 @@ const REGISTRY: Record<AdminModalKey, (p: ModalProps) => ReactElement | null> =
 
 function SaveHint() {
   const { save, dirty } = useSiteConfig();
+  const [message, setMessage] = useState<string | null>(null);
   return (
     <div className="sticky bottom-0 -mx-4 mt-4 border-t border-neutral-200 bg-white px-4 pb-1 pt-3 dark:border-white/10 dark:bg-neutral-900">
       <button
-        onClick={save}
+        onClick={async () => {
+          const saved = await save();
+          setMessage(
+            saved
+              ? "Đã lưu lên Supabase."
+              : "Chưa lưu được. Hãy nhập email/mật khẩu Supabase Auth và lưu trong nhóm Storage.",
+          );
+        }}
         className={`w-full rounded-lg py-2.5 text-sm font-bold ${
           dirty
             ? "bg-emerald-500 text-white"
@@ -4182,6 +4190,11 @@ function SaveHint() {
       >
         {dirty ? "LƯU THAY ĐỔI" : "Đã lưu"}
       </button>
+      {message && (
+        <p className="mt-1 text-center text-[11px] font-semibold text-sky-700">
+          {message}
+        </p>
+      )}
     </div>
   );
 }

@@ -155,7 +155,8 @@ function preserveLocalSecrets(
   const env = configuredSupabase();
   merged.admin.supabaseUrl = env.url || local.admin.supabaseUrl;
   merged.admin.supabaseAnonKey = env.key || local.admin.supabaseAnonKey;
-  merged.admin.supabaseAdminEmail = local.admin.supabaseAdminEmail;
+  merged.admin.supabaseAdminEmail =
+    merged.admin.supabaseAdminEmail || local.admin.supabaseAdminEmail;
   merged.admin.password = "";
   merged.admin.storageMode = "database";
   merged.admin.backupCronToken = local.admin.backupCronToken;
