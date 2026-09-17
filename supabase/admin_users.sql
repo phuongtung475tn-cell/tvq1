@@ -14,9 +14,9 @@ create policy "admins can read their own access"
   to authenticated
   using (user_id = auth.uid() and enabled = true);
 
--- Grant the current owner account after it exists in Authentication > Users.
+-- Replace the placeholder with the email created in Supabase Auth.
 insert into public.admin_users (user_id, email, role, enabled)
 select id, email, 'owner', true
 from auth.users
-where lower(email) = lower('phuongtung475.tn@gmail.com')
+where lower(email) = lower('admin@example.com')
 on conflict (user_id) do update set email = excluded.email, role = 'owner', enabled = true;

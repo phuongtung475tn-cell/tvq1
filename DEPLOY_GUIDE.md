@@ -14,6 +14,11 @@ Dự án dùng **TanStack Start (React + Vite)**. Có 2 cách chạy:
 - Tài khoản Supabase Cloud và biến môi trường `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SUPABASE_ADMIN_EMAIL`.
 - (Tùy chọn) Khóa Resend `RESEND_API_KEY` nếu muốn gửi email tự động.
 
+Repo này có thể phát hành công khai. Không commit `.env`, mật khẩu Supabase,
+`SUPABASE_SERVICE_ROLE_KEY`, Resend key hoặc backup token. Chỉ
+`VITE_SUPABASE_URL` và publishable/anon key được đưa vào frontend; RLS phải là
+lớp bảo vệ dữ liệu.
+
 Cài dependency và chạy thử local:
 
 ```bash
@@ -21,6 +26,14 @@ npm install
 npm run dev      # xem thử tại http://localhost:3000
 npm run build    # tạo bản build production
 ```
+
+Tạo file môi trường local từ mẫu:
+
+```bash
+cp .env.example .env
+```
+
+Điền giá trị thật vào `.env`; file này đã nằm trong `.gitignore`.
 
 ---
 
