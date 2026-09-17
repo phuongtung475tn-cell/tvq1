@@ -1,5 +1,18 @@
 const ACCESS_TOKEN_KEY = "funnel_supabase_access_token_v1";
 
+function tokenIsExpired(token: string): boolean {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return false;
+    const claims = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/"))) as {
+      exp?: unknown;
+    };
+    return typeof claims.exp === "number" && claims.exp <= Math.floor(Date.now() / 1000);
+  } catch {
+    return false;
+  }
+}
+
 function isBrowser() {
   return typeof window !== "undefined";
 }
@@ -7,7 +20,12 @@ function isBrowser() {
 export function getSupabaseAccessToken(): string {
   if (!isBrowser()) return "";
   try {
-    return window.sessionStorage.getItem(ACCESS_TOKEN_KEY) || "";
+    const token = window.sessionStorage.getItem(ACCESS_TOKEN_KEY) || "";
+    if (token && tokenIsExpired(token)) {
+      window.sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+      return "";
+    }
+    return token;
   } catch {
     return "";
   }

@@ -66,6 +66,12 @@ drop policy if exists "admins can read their own access" on public.admin_users;
 create policy "admins can read their own access"
   on public.admin_users for select to authenticated
   using (user_id = auth.uid() and enabled = true);
+
+drop policy if exists "admins can read leads" on public.leads;
+create policy "admins can read leads"
+  on public.leads for select
+  to authenticated
+  using (true);
 insert into public.admin_users (user_id, email, role, enabled)
 select id, email, 'owner', true from auth.users
 where lower(email) = lower('phuongtung475.tn@gmail.com')

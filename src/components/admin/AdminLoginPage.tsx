@@ -8,19 +8,24 @@ import { useSiteConfig } from "@/lib/use-site-config";
 export function AdminLoginPage() {
   const { authed, login } = useAdmin();
   const { config, ready: configReady } = useSiteConfig();
+  const env = import.meta.env as Record<string, string | undefined>;
+  const envEmail = env["VITE_SUPABASE_ADMIN_EMAIL"]?.trim() || "";
   const [password, setPassword] = useState("");
-  const [email, setEmail] = useState(config.admin.supabaseAdminEmail);
+  const [email, setEmail] = useState(
+    config.admin.supabaseAdminEmail || envEmail,
+  );
   const [supabaseUrl, setSupabaseUrl] = useState(config.admin.supabaseUrl);
   const [supabaseKey, setSupabaseKey] = useState(config.admin.supabaseAnonKey);
   const [error, setError] = useState("");
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setEmail(config.admin.supabaseAdminEmail);
+    setEmail(config.admin.supabaseAdminEmail || envEmail);
     setSupabaseUrl(config.admin.supabaseUrl);
     setSupabaseKey(config.admin.supabaseAnonKey);
   }, [
     config.admin.supabaseAdminEmail,
+    envEmail,
     config.admin.supabaseUrl,
     config.admin.supabaseAnonKey,
   ]);

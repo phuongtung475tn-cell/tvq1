@@ -14,6 +14,12 @@ create policy "admins can read their own access"
   to authenticated
   using (user_id = auth.uid() and enabled = true);
 
+drop policy if exists "admins can read leads" on public.leads;
+create policy "admins can read leads"
+  on public.leads for select
+  to authenticated
+  using (true);
+
 -- Grant the current owner account after it exists in Authentication > Users.
 insert into public.admin_users (user_id, email, role, enabled)
 select id, email, 'owner', true

@@ -23,6 +23,8 @@ create table if not exists public.leads (id uuid primary key default gen_random_
 alter table public.leads enable row level security;
 drop policy if exists "leads can be created by public form" on public.leads;
 create policy "leads can be created by public form" on public.leads for insert with check (true);
+drop policy if exists "admins can read leads" on public.leads;
+create policy "admins can read leads" on public.leads for select to authenticated using (true);
 
 create table if not exists public.visitor_sessions (id text primary key, visitor_id text not null, visited_day date not null, visited_month text not null, source text, medium text, campaign text, content text, device_model text, device_kind text, os text, browser text, created_at timestamptz not null default now());
 alter table public.visitor_sessions enable row level security;
