@@ -12,7 +12,7 @@ export function AdminLoginPage() {
   const [email, setEmail] = useState(config.admin.supabaseAdminEmail);
   const [supabaseUrl, setSupabaseUrl] = useState(config.admin.supabaseUrl);
   const [supabaseKey, setSupabaseKey] = useState(config.admin.supabaseAnonKey);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -38,7 +38,9 @@ export function AdminLoginPage() {
     ) {
       window.location.assign("/");
     } else {
-      setError(true);
+      setError(
+        "Không xác thực được. Hãy kiểm tra user Supabase Auth; mật khẩu local duhoc2026 chỉ mở phiên bootstrap và chưa cấp quyền ghi cloud.",
+      );
     }
   }
 
@@ -90,7 +92,7 @@ export function AdminLoginPage() {
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    setError(false);
+                    setError("");
                   }}
                   placeholder="Email Supabase Auth"
                   autoComplete="username"
@@ -103,7 +105,7 @@ export function AdminLoginPage() {
               type="password"
               onChange={(e) => {
                 setPassword(e.target.value);
-                setError(false);
+                setError("");
               }}
               placeholder="Mật khẩu quản trị"
               autoFocus
@@ -112,9 +114,7 @@ export function AdminLoginPage() {
               }}
               className="w-full rounded-lg bg-neutral-800 px-3 py-2.5 text-sm outline-none ring-1 ring-white/10 focus:ring-white/30"
             />
-            {error && (
-              <p className="text-xs text-red-400">Mật khẩu không đúng.</p>
-            )}
+            {error && <p className="text-xs text-red-400">{error}</p>}
             <button
               type="button"
               onClick={handleSubmit}

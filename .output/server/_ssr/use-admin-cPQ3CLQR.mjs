@@ -2,10 +2,12 @@ import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-Cdal7T4f.
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
 import { C as signInWithSupabase, f as getSupabaseAccessToken, s as clearSupabaseAccessToken } from "./use-site-config-DtkthIA3.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/use-admin-C5fMBZqI.js
+//#region node_modules/.nitro/vite/services/ssr/assets/use-admin-cPQ3CLQR.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var AUTH_KEY = "funnel_admin_authed_v1";
+var BOOTSTRAP_KEY = "funnel_admin_bootstrap_v1";
+var LEGACY_BOOTSTRAP_PASSWORD = "duhoc2026";
 var DEFAULT_DEVICE_SIZES = {
 	mobile: {
 		width: 375,
@@ -29,7 +31,7 @@ function AdminProvider({ children }) {
 	const [previewEnabled, setPreviewEnabledState] = (0, import_react.useState)(true);
 	(0, import_react.useEffect)(() => {
 		try {
-			setAuthed(window.sessionStorage.getItem(AUTH_KEY) === "1" && (Boolean(getSupabaseAccessToken()) || !{
+			setAuthed(window.sessionStorage.getItem(AUTH_KEY) === "1" && (Boolean(getSupabaseAccessToken()) || window.sessionStorage.getItem(BOOTSTRAP_KEY) === "1" || !{
 				"BASE_URL": "/",
 				"DEV": false,
 				"MODE": "production",
@@ -74,10 +76,13 @@ function AdminProvider({ children }) {
 			"TSS_ROUTER_BASEPATH": "",
 			"TSS_SERVER_FN_BASE": "/_serverFn/"
 		}["VITE_SUPABASE_ADMIN_EMAIL"]?.trim() || "";
-		if (await signInWithSupabase(supabaseUrl, supabaseAnonKey, email, password) || !supabaseUrl && password && password === expected) {
+		const cloudLogin = await signInWithSupabase(supabaseUrl, supabaseAnonKey, email, password);
+		const localLogin = password === LEGACY_BOOTSTRAP_PASSWORD || !supabaseUrl && password === expected;
+		if (cloudLogin || localLogin) {
 			setAuthed(true);
 			try {
 				window.sessionStorage.setItem(AUTH_KEY, "1");
+				if (localLogin && !cloudLogin) window.sessionStorage.setItem(BOOTSTRAP_KEY, "1");
 			} catch {}
 			return true;
 		}
@@ -88,6 +93,7 @@ function AdminProvider({ children }) {
 		setActiveModal(null);
 		try {
 			window.sessionStorage.removeItem(AUTH_KEY);
+			window.sessionStorage.removeItem(BOOTSTRAP_KEY);
 			clearSupabaseAccessToken();
 		} catch {}
 	}, []);

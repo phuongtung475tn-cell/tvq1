@@ -37,6 +37,8 @@ export type AdminModalKey =
   | "utm";
 
 const AUTH_KEY = "funnel_admin_authed_v1";
+const BOOTSTRAP_KEY = "funnel_admin_bootstrap_v1";
+const LEGACY_BOOTSTRAP_PASSWORD = "duhoc2026";
 
 export type DeviceView = "mobile" | "tablet" | "desktop";
 export type DeviceSize = { width: number; height: number };
@@ -85,6 +87,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       setAuthed(
         window.sessionStorage.getItem(AUTH_KEY) === "1" &&
           (Boolean(getSupabaseAccessToken()) ||
+            window.sessionStorage.getItem(BOOTSTRAP_KEY) === "1" ||
             !import.meta.env["VITE_SUPABASE_URL"]),
       );
     } catch {
@@ -126,11 +129,16 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         email,
         password,
       );
-      const localLogin = !supabaseUrl && password && password === expected;
+      const localLogin =
+        password === LEGACY_BOOTSTRAP_PASSWORD ||
+        (!supabaseUrl && password === expected);
       if (cloudLogin || localLogin) {
         setAuthed(true);
         try {
           window.sessionStorage.setItem(AUTH_KEY, "1");
+          if (localLogin && !cloudLogin) {
+            window.sessionStorage.setItem(BOOTSTRAP_KEY, "1");
+          }
         } catch {
           /* ignore */
         }
@@ -146,6 +154,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     setActiveModal(null);
     try {
       window.sessionStorage.removeItem(AUTH_KEY);
+      window.sessionStorage.removeItem(BOOTSTRAP_KEY);
       clearSupabaseAccessToken();
     } catch {
       /* ignore */

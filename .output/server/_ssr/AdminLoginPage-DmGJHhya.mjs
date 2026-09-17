@@ -2,9 +2,9 @@ import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-Cdal7T4f.
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
 import { D as useSiteConfig } from "./use-site-config-DtkthIA3.mjs";
-import { n as useAdmin } from "./use-admin-C5fMBZqI.mjs";
+import { n as useAdmin } from "./use-admin-cPQ3CLQR.mjs";
 import { C as Lock } from "../_libs/lucide-react.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/AdminLoginPage-guOe3QBr.js
+//#region node_modules/.nitro/vite/services/ssr/assets/AdminLoginPage-DmGJHhya.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 /** Màn hình đăng nhập quản trị — dùng cho /admin và đường dẫn tuỳ chỉnh. */
@@ -15,7 +15,7 @@ function AdminLoginPage() {
 	const [email, setEmail] = (0, import_react.useState)(config.admin.supabaseAdminEmail);
 	const [supabaseUrl, setSupabaseUrl] = (0, import_react.useState)(config.admin.supabaseUrl);
 	const [supabaseKey, setSupabaseKey] = (0, import_react.useState)(config.admin.supabaseAnonKey);
-	const [error, setError] = (0, import_react.useState)(false);
+	const [error, setError] = (0, import_react.useState)("");
 	const passwordInputRef = (0, import_react.useRef)(null);
 	(0, import_react.useEffect)(() => {
 		setEmail(config.admin.supabaseAdminEmail);
@@ -29,7 +29,7 @@ function AdminLoginPage() {
 	async function handleSubmit() {
 		const nextPassword = passwordInputRef.current?.value ?? password;
 		if (await login(nextPassword, config.admin.password, supabaseUrl, supabaseKey, email)) window.location.assign("/");
-		else setError(true);
+		else setError("Không xác thực được. Hãy kiểm tra user Supabase Auth; mật khẩu local duhoc2026 chỉ mở phiên bootstrap và chưa cấp quyền ghi cloud.");
 	}
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("main", {
 		className: "flex min-h-screen items-center justify-center bg-neutral-950 px-4 text-white",
@@ -86,7 +86,7 @@ function AdminLoginPage() {
 							value: email,
 							onChange: (e) => {
 								setEmail(e.target.value);
-								setError(false);
+								setError("");
 							},
 							placeholder: "Email Supabase Auth",
 							autoComplete: "username",
@@ -98,7 +98,7 @@ function AdminLoginPage() {
 						type: "password",
 						onChange: (e) => {
 							setPassword(e.target.value);
-							setError(false);
+							setError("");
 						},
 						placeholder: "Mật khẩu quản trị",
 						autoFocus: true,
@@ -109,7 +109,7 @@ function AdminLoginPage() {
 					}),
 					error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 						className: "text-xs text-red-400",
-						children: "Mật khẩu không đúng."
+						children: error
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 						type: "button",
