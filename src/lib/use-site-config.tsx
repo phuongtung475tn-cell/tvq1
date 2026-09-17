@@ -18,6 +18,7 @@ import {
   resetConfig,
   saveConfig,
 } from "@/services/dataAdapter";
+import { decrementCountdownWithServiceRole } from "@/services/config.functions";
 
 interface SiteConfigContextValue {
   config: SiteConfig;
@@ -94,9 +95,18 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
     configRef.current = nextConfig;
     setConfig(nextConfig);
     const saved = await saveConfig(nextConfig);
-    if (saved) setDirty(false);
-    else handledCountdownLeads.current.delete(leadId);
-    return saved;
+    if (saved) {
+      setDirty(false);
+      return true;
+    }
+    const serverSaved = await decrementCountdownWithServiceRole({
+      data: { url: nextConfig.admin.supabaseUrl },
+    });
+    if (!serverSaved.ok) {
+      handledCountdownLeads.current.delete(leadId);
+      return false;
+    }
+    return true;
   }, []);
 
   const reset = useCallback(() => {

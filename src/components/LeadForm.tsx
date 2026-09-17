@@ -397,7 +397,13 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
           `Webhook partial failure (${delivery.failedCount}/${delivery.results.length}): ${failed}`,
         );
       }
-      await decrementCountdown(savedLead.id);
+      const countdownSaved = await decrementCountdown(savedLead.id);
+      if (!countdownSaved) {
+        toast.warning("Lead đã lưu, nhưng chưa cập nhật được số suất.", {
+          description:
+            "Kiểm tra SUPABASE_URL và SUPABASE_SERVICE_ROLE_KEY trên server rồi redeploy.",
+        });
+      }
 
       // Ghi nhận chuyển đổi cho Analytics Dashboard + A/B comparison.
       trackConversion(source, config.abTest.enabled ? variant : undefined);
