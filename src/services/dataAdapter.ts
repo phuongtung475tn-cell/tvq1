@@ -180,10 +180,11 @@ export function loadConfig(): SiteConfig {
       isRecord(parsed) ? (parsed as Partial<SiteConfig>) : null,
     );
     const env = configuredSupabase();
-    clearClientCache();
-    config.admin.storageMode = "database";
-    config.admin.supabaseUrl = env.url || config.admin.supabaseUrl;
-    config.admin.supabaseAnonKey = env.key || config.admin.supabaseAnonKey;
+    if (env.url && env.key) {
+      config.admin.storageMode = "database";
+      config.admin.supabaseUrl = env.url;
+      config.admin.supabaseAnonKey = env.key;
+    }
     return config;
   } catch {
     return structuredClone(DEFAULT_CONFIG);
@@ -222,7 +223,6 @@ export async function loadCloudConfig(
       mergeConfig(config, data as Partial<SiteConfig>),
       config,
     );
-    clearClientCache();
     return hydrated;
   } catch {
     return null;
@@ -635,7 +635,10 @@ export async function saveLead(
       config.admin.supabaseUrl,
       config.admin.supabaseAnonKey,
     );
-    if (!ok) record.storage = "local";
+    if (!ok) {
+      record.storage = "local";
+      cacheLeadLocally(record);
+    }
   }
   return record;
 }

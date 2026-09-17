@@ -49,8 +49,11 @@ function injectRaw(id: string, html: string, target: "head" | "body") {
 }
 
 function setMeta(name: string, content: string) {
-  if (!content) return;
   let el = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
+  if (!content) {
+    el?.remove();
+    return;
+  }
   if (!el) {
     el = document.createElement("meta");
     el.name = name;
@@ -60,10 +63,13 @@ function setMeta(name: string, content: string) {
 }
 
 function setProperty(property: string, content: string) {
-  if (!content) return;
   let el = document.querySelector<HTMLMetaElement>(
     `meta[property="${property}"]`,
   );
+  if (!content) {
+    el?.remove();
+    return;
+  }
   if (!el) {
     el = document.createElement("meta");
     el.setAttribute("property", property);
@@ -73,8 +79,11 @@ function setProperty(property: string, content: string) {
 }
 
 function setLink(rel: string, href: string, type?: string) {
-  if (!href) return;
   let el = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+  if (!href) {
+    el?.remove();
+    return;
+  }
   if (!el) {
     el = document.createElement("link");
     el.rel = rel;
@@ -242,9 +251,11 @@ export function RuntimeConfig() {
     setProperty("og:type", "website");
     setProperty(
       "og:image",
-      /^https?:\/\//i.test(seoOgImage)
-        ? seoOgImage
-        : `${window.location.origin}${seoOgImage.startsWith("/") ? seoOgImage : `/${seoOgImage}`}`,
+      seoOgImage
+        ? /^https?:\/\//i.test(seoOgImage)
+          ? seoOgImage
+          : `${window.location.origin}${seoOgImage.startsWith("/") ? seoOgImage : `/${seoOgImage}`}`
+        : "",
     );
     setMeta("twitter:title", seoTitle);
     setMeta("twitter:description", seoDescription);
