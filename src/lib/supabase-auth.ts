@@ -4,10 +4,15 @@ function tokenIsExpired(token: string): boolean {
   try {
     const payload = token.split(".")[1];
     if (!payload) return false;
-    const claims = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/"))) as {
+    const claims = JSON.parse(
+      atob(payload.replace(/-/g, "+").replace(/_/g, "/")),
+    ) as {
       exp?: unknown;
     };
-    return typeof claims.exp === "number" && claims.exp <= Math.floor(Date.now() / 1000);
+    return (
+      typeof claims.exp === "number" &&
+      claims.exp <= Math.floor(Date.now() / 1000)
+    );
   } catch {
     return false;
   }
