@@ -2,7 +2,7 @@ import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-Cdal7T4f.
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
 import { C as signInWithSupabase, f as getSupabaseAccessToken, s as clearSupabaseAccessToken } from "./use-site-config-CxFNRWjt.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/use-admin-BurUZiDx.js
+//#region node_modules/.nitro/vite/services/ssr/assets/use-admin-wcFmeTYw.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var AUTH_KEY = "funnel_admin_authed_v1";
@@ -33,12 +33,10 @@ function AdminProvider({ children }) {
 		} catch {}
 	}, []);
 	const setDeviceSize = (0, import_react.useCallback)((view, size) => {
-		setDeviceSizes((current) => {
-			return {
-				...current,
-				[view]: size
-			};
-		});
+		setDeviceSizes((current) => ({
+			...current,
+			[view]: size
+		}));
 	}, []);
 	const resetDeviceSizes = (0, import_react.useCallback)(() => {
 		setDeviceSizes(DEFAULT_DEVICE_SIZES);
@@ -47,7 +45,7 @@ function AdminProvider({ children }) {
 		setPreviewEnabledState(enabled);
 	}, []);
 	const login = (0, import_react.useCallback)(async (password, _expected, supabaseUrl = "", supabaseAnonKey = "", supabaseAdminEmail = "") => {
-		const email = supabaseAdminEmail?.trim() || {
+		const email = supabaseAdminEmail.trim() || {
 			"BASE_URL": "/",
 			"DEV": false,
 			"MODE": "production",
@@ -61,14 +59,12 @@ function AdminProvider({ children }) {
 			"TSS_ROUTER_BASEPATH": "",
 			"TSS_SERVER_FN_BASE": "/_serverFn/"
 		}["VITE_SUPABASE_ADMIN_EMAIL"]?.trim() || "";
-		if (await signInWithSupabase(supabaseUrl, supabaseAnonKey, email, password)) {
-			setAuthed(true);
-			try {
-				window.sessionStorage.setItem(AUTH_KEY, "1");
-			} catch {}
-			return true;
-		}
-		return false;
+		if (!await signInWithSupabase(supabaseUrl, supabaseAnonKey, email, password)) return false;
+		setAuthed(true);
+		try {
+			window.sessionStorage.setItem(AUTH_KEY, "1");
+		} catch {}
+		return true;
 	}, []);
 	const logout = (0, import_react.useCallback)(() => {
 		setAuthed(false);
@@ -83,7 +79,7 @@ function AdminProvider({ children }) {
 		login,
 		logout,
 		activeModal,
-		openModal: (k) => setActiveModal(k),
+		openModal: (key) => setActiveModal(key),
 		closeModal: () => setActiveModal(null),
 		device,
 		setDevice,
