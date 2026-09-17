@@ -4,49 +4,35 @@ import { useEffect, useRef, useState } from "react";
 import { useAdmin } from "@/lib/use-admin";
 import { useSiteConfig } from "@/lib/use-site-config";
 
-/** Màn hình đăng nhập quản trị — dùng cho /admin và đường dẫn tuỳ chỉnh. */
 export function AdminLoginPage() {
   const { authed, login } = useAdmin();
   const { config, ready: configReady } = useSiteConfig();
-  const env = import.meta.env as Record<string, string | undefined>;
-  const envEmail = env["VITE_SUPABASE_ADMIN_EMAIL"]?.trim() || "";
   const [password, setPassword] = useState("");
-  const [email, setEmail] = useState(
-    config.admin.supabaseAdminEmail || envEmail,
-  );
-  const [supabaseUrl, setSupabaseUrl] = useState(config.admin.supabaseUrl);
-  const [supabaseKey, setSupabaseKey] = useState(config.admin.supabaseAnonKey);
   const [error, setError] = useState("");
   const passwordInputRef = useRef<HTMLInputElement>(null);
+  const env = import.meta.env as Record<string, string | undefined>;
+  const supabaseUrl =
+    env["VITE_SUPABASE_URL"]?.trim() || config.admin.supabaseUrl;
+  const supabaseKey =
+    env["VITE_SUPABASE_ANON_KEY"]?.trim() || config.admin.supabaseAnonKey;
+  const email =
+    env["VITE_SUPABASE_ADMIN_EMAIL"]?.trim() || config.admin.supabaseAdminEmail;
 
-  useEffect(() => {
-    setEmail(config.admin.supabaseAdminEmail || envEmail);
-    setSupabaseUrl(config.admin.supabaseUrl);
-    setSupabaseKey(config.admin.supabaseAnonKey);
-  }, [
-    config.admin.supabaseAdminEmail,
-    envEmail,
-    config.admin.supabaseUrl,
-    config.admin.supabaseAnonKey,
-  ]);
+  useEffect(() => setError(""), [configReady]);
 
   async function handleSubmit() {
-    const nextPassword = passwordInputRef.current?.value ?? password;
-    if (
-      await login(
-        nextPassword,
-        config.admin.password,
-        supabaseUrl,
-        supabaseKey,
-        email,
-      )
-    ) {
-      window.location.assign("/");
-    } else {
+    const ok = await login(
+      passwordInputRef.current?.value ?? password,
+      "",
+      supabaseUrl,
+      supabaseKey,
+      email,
+    );
+    if (ok) window.location.assign("/");
+    else
       setError(
-        "Không xác thực được. Email phải là user Supabase Auth và được cấp quyền trong admin_users.",
+        "Đăng nhập thất bại. Kiểm tra Supabase Auth và quyền trong admin_users.",
       );
-    }
   }
 
   return (
@@ -58,10 +44,9 @@ export function AdminLoginPage() {
           </div>
           <h1 className="text-lg font-bold">Đăng nhập quản trị</h1>
           <p className="mt-1 text-xs text-white/50">
-            Funnel Builder — Bảng điều khiển
+            Funnel Builder — Supabase Auth
           </p>
         </div>
-
         {authed ? (
           <div className="space-y-3 text-center">
             <p className="text-sm text-emerald-400">Đã đăng nhập.</p>
@@ -69,68 +54,36 @@ export function AdminLoginPage() {
               href="/"
               className="block w-full rounded-lg bg-white py-2.5 text-sm font-bold text-neutral-900"
             >
-              Vào trang &amp; bật chế độ Admin
+              Vào trang quản trị
             </a>
           </div>
         ) : (
           <div className="space-y-3">
-            {config.admin.storageMode === "database" && (
-              <>
-                <input
-                  type="url"
-                  value={supabaseUrl}
-                  onChange={(e) => setSupabaseUrl(e.target.value)}
-                  placeholder="https://your-project.supabase.co"
-                  autoComplete="url"
-                  className="w-full rounded-lg bg-neutral-800 px-3 py-2.5 text-sm outline-none ring-1 ring-white/10 focus:ring-white/30"
-                />
-                <input
-                  type="password"
-                  value={supabaseKey}
-                  onChange={(e) => setSupabaseKey(e.target.value)}
-                  placeholder="Supabase publishable/anon key"
-                  autoComplete="off"
-                  className="w-full rounded-lg bg-neutral-800 px-3 py-2.5 text-sm outline-none ring-1 ring-white/10 focus:ring-white/30"
-                />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setError("");
-                  }}
-                  placeholder="Email Supabase Auth"
-                  autoComplete="username"
-                  className="w-full rounded-lg bg-neutral-800 px-3 py-2.5 text-sm outline-none ring-1 ring-white/10 focus:ring-white/30"
-                />
-              </>
-            )}
             <input
               ref={passwordInputRef}
               type="password"
-              onChange={(e) => {
-                setPassword(e.target.value);
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
                 setError("");
               }}
-              placeholder="Mật khẩu quản trị"
+              placeholder="Mật khẩu Supabase Auth"
+              autoComplete="current-password"
               autoFocus
               onKeyDown={(event) => {
-                if (event.key === "Enter") handleSubmit();
+                if (event.key === "Enter") void handleSubmit();
               }}
-              className="w-full rounded-lg bg-neutral-800 px-3 py-2.5 text-sm outline-none ring-1 ring-white/10 focus:ring-white/30"
+              className="w-full rounded-lg bg-neutral-800 px-3 py-2.5 text-sm outline-none ring-1 ring-white/10"
             />
             {error && <p className="text-xs text-red-400">{error}</p>}
             <button
               type="button"
-              onClick={handleSubmit}
-              disabled={!configReady}
-              className="w-full rounded-lg bg-white py-2.5 text-sm font-bold text-neutral-900 transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+              onClick={() => void handleSubmit()}
+              disabled={!configReady || !email || !supabaseUrl || !supabaseKey}
+              className="w-full rounded-lg bg-white py-2.5 text-sm font-bold text-neutral-900 disabled:opacity-60"
             >
               {configReady ? "Đăng nhập" : "Đang tải cấu hình..."}
             </button>
-            <p className="text-center text-[11px] text-white/40">
-              Đổi mật khẩu &amp; đường dẫn trong công cụ “Đổi Link Admin”.
-            </p>
           </div>
         )}
       </div>

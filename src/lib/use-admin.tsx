@@ -65,7 +65,6 @@ interface AdminContextValue {
   deviceSizes: Record<DeviceView, DeviceSize>;
   setDeviceSize: (device: DeviceView, size: DeviceSize) => void;
   resetDeviceSizes: () => void;
-  /** Bật: xem qua khung iframe theo thiết bị. Tắt: chỉnh trực tiếp trên trang thật. */
   previewEnabled: boolean;
   setPreviewEnabled: (enabled: boolean) => void;
 }
@@ -92,10 +91,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setDeviceSize = useCallback((view: DeviceView, size: DeviceSize) => {
-    setDeviceSizes((current) => {
-      const next = { ...current, [view]: size };
-      return next;
-    });
+    setDeviceSizes((current) => ({ ...current, [view]: size }));
   }, []);
 
   const resetDeviceSizes = useCallback(() => {
@@ -116,7 +112,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     ) => {
       const env = import.meta.env as Record<string, string | undefined>;
       const email =
-        supabaseAdminEmail?.trim() ||
+        supabaseAdminEmail.trim() ||
         env["VITE_SUPABASE_ADMIN_EMAIL"]?.trim() ||
         "";
       const cloudLogin = await signInWithSupabase(
@@ -125,16 +121,14 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         email,
         password,
       );
-      if (cloudLogin) {
-        setAuthed(true);
-        try {
-          window.sessionStorage.setItem(AUTH_KEY, "1");
-        } catch {
-          /* ignore */
-        }
-        return true;
+      if (!cloudLogin) return false;
+      setAuthed(true);
+      try {
+        window.sessionStorage.setItem(AUTH_KEY, "1");
+      } catch {
+        /* ignore */
       }
-      return false;
+      return true;
     },
     [],
   );
@@ -156,7 +150,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       login,
       logout,
       activeModal,
-      openModal: (k: AdminModalKey) => setActiveModal(k),
+      openModal: (key: AdminModalKey) => setActiveModal(key),
       closeModal: () => setActiveModal(null),
       device,
       setDevice,
