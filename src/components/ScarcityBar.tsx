@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 
 import { useSiteConfig } from "@/lib/use-site-config";
-import { COUNTDOWN_DECREMENT_EVENT } from "@/services/dataAdapter";
 
 function endOfMonth() {
   const now = new Date();
@@ -22,7 +21,7 @@ function pad(n: number) {
 
 /** Đếm ngược + số suất còn lại, lấy trực tiếp từ cấu hình Admin. */
 export function ScarcityBar({ tone = "light" }: { tone?: "light" | "dark" }) {
-  const { config, decrementCountdown } = useSiteConfig();
+  const { config } = useSiteConfig();
   const c = config.countdown;
   const [left, setLeft] = useState<number | null>(null);
 
@@ -38,18 +37,6 @@ export function ScarcityBar({ tone = "light" }: { tone?: "light" | "dark" }) {
     const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
   }, [validTarget]);
-
-  useEffect(() => {
-    if (!c.enabled || c.autoDecrement === false) return;
-    const onLeadCreated = (event: Event) => {
-      const leadId = (event as CustomEvent<{ leadId?: string }>).detail?.leadId;
-      if (!leadId) return;
-      void decrementCountdown(leadId);
-    };
-    window.addEventListener(COUNTDOWN_DECREMENT_EVENT, onLeadCreated);
-    return () =>
-      window.removeEventListener(COUNTDOWN_DECREMENT_EVENT, onLeadCreated);
-  }, [c.enabled, c.autoDecrement, decrementCountdown]);
 
   const d = left === null ? 0 : Math.floor(left / 86400000);
   const h = left === null ? 0 : Math.floor((left % 86400000) / 3600000);

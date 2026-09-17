@@ -79,7 +79,11 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
   const decrementCountdown = useCallback(async (leadId: string) => {
     if (handledCountdownLeads.current.has(leadId)) return true;
     const current = configRef.current;
-    if (!current.countdown.enabled || current.countdown.slotsLeft <= 0)
+    if (
+      !current.countdown.enabled ||
+      current.countdown.autoDecrement === false ||
+      current.countdown.slotsLeft <= 0
+    )
       return true;
     handledCountdownLeads.current.add(leadId);
     const nextConfig = structuredClone(current);

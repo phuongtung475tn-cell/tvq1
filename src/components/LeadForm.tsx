@@ -19,7 +19,6 @@ import {
   isDuplicateLeadRemote,
   saveLead,
   trackConversion,
-  COUNTDOWN_DECREMENT_EVENT,
   type LeadRecord,
 } from "@/services/dataAdapter";
 import { sendLeadEmail } from "@/lib/email.functions";
@@ -140,7 +139,7 @@ function rateLimited(maxCount: number, windowMin: number): boolean {
 }
 
 export function LeadForm({ id = "dang-ky" }: { id?: string }) {
-  const { config } = useSiteConfig();
+  const { config, decrementCountdown } = useSiteConfig();
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
   const [form, setForm] = useState(EMPTY);
@@ -398,11 +397,7 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
           `Webhook partial failure (${delivery.failedCount}/${delivery.results.length}): ${failed}`,
         );
       }
-      window.dispatchEvent(
-        new CustomEvent(COUNTDOWN_DECREMENT_EVENT, {
-          detail: { leadId: savedLead.id },
-        }),
-      );
+      await decrementCountdown(savedLead.id);
 
       // Ghi nhận chuyển đổi cho Analytics Dashboard + A/B comparison.
       trackConversion(source, config.abTest.enabled ? variant : undefined);
