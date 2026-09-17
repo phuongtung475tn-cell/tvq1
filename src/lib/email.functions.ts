@@ -86,6 +86,15 @@ async function sendWithGmail(data: z.infer<typeof schema>) {
     : { sent: false as const, reason: "gmail_send_error" as const };
 }
 
+function providerFailure(status: number, detail: string) {
+  return {
+    sent: false as const,
+    reason: "provider_error" as const,
+    status,
+    detail: detail.replace(/\s+/g, " ").trim().slice(0, 240),
+  };
+}
+
 export const sendLeadEmail = createServerFn({ method: "POST" })
   .validator((data) => schema.parse(data))
   .handler(async ({ data }) => {
@@ -98,6 +107,8 @@ export const sendLeadEmail = createServerFn({ method: "POST" })
       process.env["BACKUP_FROM_EMAIL"] ||
       "";
     if (!from) return { sent: false, reason: "missing_from_email" as const };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(from))
+      return { sent: false, reason: "invalid_from_email" as const };
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const res = await fetch("https://api.resend.com/emails", {
@@ -120,16 +131,12 @@ export const sendLeadEmail = createServerFn({ method: "POST" })
         `Resend failed [${res.status}] attempt ${attempt + 1}: ${detail}`,
       );
       if (res.status < 500 && res.status !== 429) {
-        return {
-          sent: false,
-          reason: "provider_error" as const,
-          status: res.status,
-        };
+        return providerFailure(res.status, detail);
       }
       if (attempt < 2)
         await new Promise((resolve) => setTimeout(resolve, 400 * 2 ** attempt));
     }
-    return { sent: false, reason: "provider_error" as const, status: 503 };
+    return providerFailure(503, "Resend không phản hồi sau 3 lần thử.");
   });
 
 export const sendTestEmail = createServerFn({ method: "POST" })

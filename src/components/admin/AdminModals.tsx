@@ -1122,7 +1122,7 @@ function EmailModal({ onClose }: ModalProps) {
               setTestMessage(
                 result.sent
                   ? "Đã gửi email test thành công."
-                  : `Gửi email test thất bại: ${result.reason}`,
+                  : `Gửi email test thất bại: ${result.reason}${"status" in result && result.status ? ` (${result.status})` : ""}${"detail" in result && result.detail ? ` — ${result.detail}` : ""}`,
               );
             })
             .catch((error: unknown) => {
