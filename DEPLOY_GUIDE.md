@@ -33,7 +33,6 @@ npm run build    # tạo bản build production
    - `VITE_SUPABASE_URL` — URL public của project Supabase.
    - `VITE_SUPABASE_ANON_KEY` — publishable/anon key, không dùng service role key.
    - `VITE_SUPABASE_ADMIN_EMAIL` — email của user quản trị đã tạo trong Supabase Auth.
-   - `SUPABASE_SERVICE_ROLE_KEY` — chỉ đặt ở Vercel server environment, tuyệt đối không đưa vào frontend.
 4. Bấm **Deploy**. Xong.
 
 > Form lead, CRM cloud và webhook relay cần deployment có SSR như Vercel.

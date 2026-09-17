@@ -37,17 +37,6 @@ function stripSecrets(config: Record<string, unknown>) {
 export const saveConfigWithSupabaseAuth = createServerFn({ method: "POST" })
   .validator((input) => saveSchema.parse(input))
   .handler(async ({ data }) => {
-    const serviceUrl =
-      process.env["SUPABASE_URL"]?.replace(/\/$/, "") ||
-      data.url.replace(/\/$/, "");
-    const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
-    if (!serviceUrl || !serviceKey) {
-      return { ok: false, reason: "missing_server_supabase_env" } as const;
-    }
-    if (serviceUrl !== data.url.replace(/\/$/, "")) {
-      return { ok: false, reason: "url_mismatch" } as const;
-    }
-
     const authResponse = await fetch(
       `${data.url.replace(/\/$/, "")}/auth/v1/token?grant_type=password`,
       {
@@ -64,13 +53,13 @@ export const saveConfigWithSupabaseAuth = createServerFn({ method: "POST" })
       return { ok: false, reason: "auth_failed" } as const;
 
     const response = await fetch(
-      `${serviceUrl}/rest/v1/funnel_configs?on_conflict=id`,
+      `${data.url.replace(/\/$/, "")}/rest/v1/funnel_configs?on_conflict=id`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          apikey: serviceKey,
-          Authorization: `Bearer ${serviceKey}`,
+          apikey: data.anonKey,
+          Authorization: `Bearer ${authPayload.access_token}`,
           Prefer: "resolution=merge-duplicates,return=minimal",
         },
         body: JSON.stringify([

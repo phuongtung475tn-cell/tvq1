@@ -1,9 +1,9 @@
-import { r as __toESM, t as getServerFnById } from "../__23tanstack-start-server-fn-resolver-SwdlihR5.mjs";
+import { r as __toESM, t as getServerFnById } from "../__23tanstack-start-server-fn-resolver-Cdal7T4f.mjs";
 import { c as createServerFn, i as TSS_SERVER_FUNCTION } from "./createServerFn-CIHAFgYl.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
 import { a as unknownType, i as stringType, n as objectType, r as recordType } from "../_libs/zod.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-DfPbtmQN.js
+//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-C6pC4bLh.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var DEFAULT_CONFIG = {
@@ -11,8 +11,8 @@ var DEFAULT_CONFIG = {
 		adminPath: "admin",
 		password: "",
 		storageMode: "database",
-		supabaseUrl: "",
-		supabaseAnonKey: "",
+		supabaseUrl: "https://trkdtkrnukfvvcopiwlp.supabase.co",
+		supabaseAnonKey: "sb_publishable_hajPAFQZ0SiziA8IdANyGw_2oXBlZST",
 		supabaseAdminEmail: "",
 		backupEmail: "",
 		cronSchedule: "off",
@@ -717,8 +717,8 @@ function loadConfig() {
 		const env = configuredSupabase();
 		clearClientCache();
 		config.admin.storageMode = "database";
-		config.admin.supabaseUrl = env.url;
-		config.admin.supabaseAnonKey = env.key;
+		config.admin.supabaseUrl = env.url || config.admin.supabaseUrl;
+		config.admin.supabaseAnonKey = env.key || config.admin.supabaseAnonKey;
 		return config;
 	} catch {
 		return structuredClone(DEFAULT_CONFIG);
@@ -789,7 +789,16 @@ function resetConfig() {
 }
 function exportConfigFile(config) {
 	if (!isBrowser()) return;
-	const content = `// AUTO-GENERATED — dán đè vào src/config/site-config.ts (phần DEFAULT_CONFIG)\nexport const DEFAULT_CONFIG = ${JSON.stringify(config, null, 2)};\n`;
+	const exportConfig = structuredClone(config);
+	exportConfig.admin.supabaseAnonKey = "";
+	exportConfig.admin.password = "";
+	exportConfig.admin.backupCronToken = "";
+	exportConfig.emailAutomation.resendApiKey = "";
+	exportConfig.emailAutomation.gmailClientId = "";
+	exportConfig.emailAutomation.gmailClientSecret = "";
+	exportConfig.emailAutomation.gmailRefreshToken = "";
+	exportConfig.tracking.tiktokAccessToken = "";
+	const content = `// AUTO-GENERATED — dán đè vào src/config/site-config.ts (phần DEFAULT_CONFIG)\nexport const DEFAULT_CONFIG = ${JSON.stringify(exportConfig, null, 2)};\n`;
 	const blob = new Blob([content], { type: "text/javascript" });
 	const url = URL.createObjectURL(blob);
 	const a = document.createElement("a");

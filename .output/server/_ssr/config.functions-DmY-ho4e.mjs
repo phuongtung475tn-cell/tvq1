@@ -1,8 +1,7 @@
 import { c as createServerFn } from "./createServerFn-CIHAFgYl.mjs";
 import { a as unknownType, i as stringType, n as objectType, r as recordType } from "../_libs/zod.mjs";
 import { t as createServerRpc } from "./createServerRpc-B90ckaqP.mjs";
-import processModule from "node:process";
-//#region node_modules/.nitro/vite/services/ssr/assets/config.functions-DJz-tWxs.js
+//#region node_modules/.nitro/vite/services/ssr/assets/config.functions-DmY-ho4e.js
 var saveSchema = objectType({
 	url: stringType().url(),
 	anonKey: stringType().min(1),
@@ -36,16 +35,6 @@ var saveConfigWithSupabaseAuth_createServerFn_handler = createServerRpc({
 	filename: "src/services/config.functions.ts"
 }, (opts) => saveConfigWithSupabaseAuth.__executeServer(opts));
 var saveConfigWithSupabaseAuth = createServerFn({ method: "POST" }).validator((input) => saveSchema.parse(input)).handler(saveConfigWithSupabaseAuth_createServerFn_handler, async ({ data }) => {
-	const serviceUrl = processModule.env["SUPABASE_URL"]?.replace(/\/$/, "") || data.url.replace(/\/$/, "");
-	const serviceKey = processModule.env["SUPABASE_SERVICE_ROLE_KEY"];
-	if (!serviceUrl || !serviceKey) return {
-		ok: false,
-		reason: "missing_server_supabase_env"
-	};
-	if (serviceUrl !== data.url.replace(/\/$/, "")) return {
-		ok: false,
-		reason: "url_mismatch"
-	};
 	const authResponse = await fetch(`${data.url.replace(/\/$/, "")}/auth/v1/token?grant_type=password`, {
 		method: "POST",
 		headers: {
@@ -66,12 +55,12 @@ var saveConfigWithSupabaseAuth = createServerFn({ method: "POST" }).validator((i
 		ok: false,
 		reason: "auth_failed"
 	};
-	if (!(await fetch(`${serviceUrl}/rest/v1/funnel_configs?on_conflict=id`, {
+	if (!(await fetch(`${data.url.replace(/\/$/, "")}/rest/v1/funnel_configs?on_conflict=id`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
-			apikey: serviceKey,
-			Authorization: `Bearer ${serviceKey}`,
+			apikey: data.anonKey,
+			Authorization: `Bearer ${authPayload.access_token}`,
 			Prefer: "resolution=merge-duplicates,return=minimal"
 		},
 		body: JSON.stringify([{

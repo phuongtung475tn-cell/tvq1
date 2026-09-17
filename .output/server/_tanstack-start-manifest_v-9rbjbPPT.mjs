@@ -1,4 +1,4 @@
-//#region node_modules/.nitro/vite/services/ssr/assets/_tanstack-start-manifest_v-DYfW0E_E.js
+//#region node_modules/.nitro/vite/services/ssr/assets/_tanstack-start-manifest_v-9rbjbPPT.js
 var tsrStartManifest = () => ({ routes: {
 	__root__: {
 		filePath: "/workspaces/tvq1/src/routes/__root.tsx",
@@ -7,31 +7,31 @@ var tsrStartManifest = () => ({ routes: {
 			"/$",
 			"/admin"
 		],
-		preloads: ["/assets/index-D1CsyreU.js", "/assets/createLucideIcon-C-wPCUph.js"],
+		preloads: ["/assets/index-BSVGB4PJ.js", "/assets/createLucideIcon-DjAXMdnk.js"],
 		scripts: [{ attrs: {
 			type: "module",
 			async: !0,
-			src: "/assets/index-D1CsyreU.js"
+			src: "/assets/index-BSVGB4PJ.js"
 		} }]
 	},
 	"/": {
 		filePath: "/workspaces/tvq1/src/routes/index.tsx",
 		children: void 0,
-		preloads: ["/assets/routes-CRt9nWQT.js", "/assets/ContentSection-B25OnkLj.js"]
+		preloads: ["/assets/routes-DTyzChn-.js", "/assets/ContentSection-DCAafaWj.js"]
 	},
 	"/$": {
 		filePath: "/workspaces/tvq1/src/routes/$.tsx",
 		children: void 0,
 		preloads: [
-			"/assets/_-CA5dx2zD.js",
-			"/assets/AdminLoginPage-Dmznmr-U.js",
-			"/assets/ContentSection-B25OnkLj.js"
+			"/assets/_-06h5cLwo.js",
+			"/assets/AdminLoginPage-BHRR4vc5.js",
+			"/assets/ContentSection-DCAafaWj.js"
 		]
 	},
 	"/admin": {
 		filePath: "/workspaces/tvq1/src/routes/admin.tsx",
 		children: void 0,
-		preloads: ["/assets/admin-B_AgvWf7.js", "/assets/AdminLoginPage-Dmznmr-U.js"]
+		preloads: ["/assets/admin-BS99TgAS.js", "/assets/AdminLoginPage-BHRR4vc5.js"]
 	}
 } });
 //#endregion

@@ -181,8 +181,8 @@ export function loadConfig(): SiteConfig {
     const env = configuredSupabase();
     clearClientCache();
     config.admin.storageMode = "database";
-    config.admin.supabaseUrl = env.url;
-    config.admin.supabaseAnonKey = env.key;
+    config.admin.supabaseUrl = env.url || config.admin.supabaseUrl;
+    config.admin.supabaseAnonKey = env.key || config.admin.supabaseAnonKey;
     return config;
   } catch {
     return structuredClone(DEFAULT_CONFIG);
@@ -293,8 +293,17 @@ export function resetConfig(): SiteConfig {
 
 export function exportConfigFile(config: SiteConfig): void {
   if (!isBrowser()) return;
+  const exportConfig = structuredClone(config);
+  exportConfig.admin.supabaseAnonKey = "";
+  exportConfig.admin.password = "";
+  exportConfig.admin.backupCronToken = "";
+  exportConfig.emailAutomation.resendApiKey = "";
+  exportConfig.emailAutomation.gmailClientId = "";
+  exportConfig.emailAutomation.gmailClientSecret = "";
+  exportConfig.emailAutomation.gmailRefreshToken = "";
+  exportConfig.tracking.tiktokAccessToken = "";
   const content = `// AUTO-GENERATED — dán đè vào src/config/site-config.ts (phần DEFAULT_CONFIG)\nexport const DEFAULT_CONFIG = ${JSON.stringify(
-    config,
+    exportConfig,
     null,
     2,
   )};\n`;

@@ -21,11 +21,11 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 	enumerable: true
 }) : target, mod));
 //#endregion
-//#region node_modules/.nitro/vite/services/ssr/assets/__23tanstack-start-server-fn-resolver-SwdlihR5.js
+//#region node_modules/.nitro/vite/services/ssr/assets/__23tanstack-start-server-fn-resolver-Cdal7T4f.js
 var manifest = {
 	"59299230b1dcbdf2a6bf7bd85cf72e0921cd318d99fd9be43df2d046cebba28a": {
 		functionName: "saveConfigWithSupabaseAuth_createServerFn_handler",
-		importer: () => import("./_ssr/config.functions-DJz-tWxs.mjs")
+		importer: () => import("./_ssr/config.functions-DmY-ho4e.mjs")
 	},
 	"5dd11d22fa873a9491cd5c93fc3d45224e628a4cc8d4b35c4fa8cccd1e4b748c": {
 		functionName: "checkEmailConfig_createServerFn_handler",

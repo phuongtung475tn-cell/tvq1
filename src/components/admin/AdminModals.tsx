@@ -1719,7 +1719,7 @@ function StorageModal({ onClose }: ModalProps) {
               setSaveMessage(
                 result.ok
                   ? "Đã xác thực và lưu cấu hình vào Supabase."
-                  : `Chưa lưu được: ${result.reason || "lỗi không xác định"}. Kiểm tra biến SUPABASE_SERVICE_ROLE_KEY trên Vercel.`,
+                  : `Chưa lưu được: ${result.reason || "lỗi không xác định"}. Kiểm tra email/mật khẩu Supabase Auth và RLS.`,
               );
               setSavingConnection(false);
               if (result.ok) setAdminPassword("");

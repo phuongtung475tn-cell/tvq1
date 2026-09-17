@@ -1,10 +1,10 @@
-import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-SwdlihR5.mjs";
+import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-Cdal7T4f.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { D as useSiteConfig } from "./use-site-config-DfPbtmQN.mjs";
-import { n as useAdmin } from "./use-admin-B2CgoStD.mjs";
+import { D as useSiteConfig } from "./use-site-config-C6pC4bLh.mjs";
+import { n as useAdmin } from "./use-admin-BB70iQGk.mjs";
 import { C as Lock } from "../_libs/lucide-react.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/AdminLoginPage-D9hDY-dy.js
+//#region node_modules/.nitro/vite/services/ssr/assets/AdminLoginPage-C7rU9N7t.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 /** Màn hình đăng nhập quản trị — dùng cho /admin và đường dẫn tuỳ chỉnh. */
@@ -21,7 +21,11 @@ function AdminLoginPage() {
 		setEmail(config.admin.supabaseAdminEmail);
 		setSupabaseUrl(config.admin.supabaseUrl);
 		setSupabaseKey(config.admin.supabaseAnonKey);
-	}, [config.admin.supabaseAdminEmail]);
+	}, [
+		config.admin.supabaseAdminEmail,
+		config.admin.supabaseUrl,
+		config.admin.supabaseAnonKey
+	]);
 	async function handleSubmit() {
 		const nextPassword = passwordInputRef.current?.value ?? password;
 		if (await login(nextPassword, config.admin.password, supabaseUrl, supabaseKey, email)) window.location.assign("/");
