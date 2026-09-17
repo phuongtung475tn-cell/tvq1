@@ -42,10 +42,34 @@ export async function signInWithSupabase(
       },
     );
     if (!response.ok) return false;
-    const payload = (await response.json()) as { access_token?: unknown };
+    const payload = (await response.json()) as {
+      access_token?: unknown;
+      user?: { id?: unknown };
+    };
     if (typeof payload.access_token !== "string" || !payload.access_token) {
       return false;
     }
+    const userResponse = await fetch(`${url.replace(/\/$/, "")}/auth/v1/user`, {
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${payload.access_token}`,
+      },
+    });
+    if (!userResponse.ok) return false;
+    const user = (await userResponse.json()) as { id?: unknown };
+    if (typeof user.id !== "string" || !user.id) return false;
+    const adminResponse = await fetch(
+      `${url.replace(/\/$/, "")}/rest/v1/admin_users?user_id=eq.${encodeURIComponent(user.id)}&enabled=eq.true&select=user_id&limit=1`,
+      {
+        headers: {
+          apikey: anonKey,
+          Authorization: `Bearer ${payload.access_token}`,
+        },
+      },
+    );
+    if (!adminResponse.ok) return false;
+    const admins = (await adminResponse.json()) as unknown[];
+    if (!Array.isArray(admins) || admins.length === 0) return false;
     window.sessionStorage.setItem(ACCESS_TOKEN_KEY, payload.access_token);
     return true;
   } catch {

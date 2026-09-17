@@ -39,7 +39,7 @@ export function AdminLoginPage() {
       window.location.assign("/");
     } else {
       setError(
-        "Không xác thực được. Hãy kiểm tra user Supabase Auth; mật khẩu local duhoc2026 chỉ mở phiên bootstrap và chưa cấp quyền ghi cloud.",
+        "Không xác thực được. Email phải là user Supabase Auth và được cấp quyền trong admin_users.",
       );
     }
   }
