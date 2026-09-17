@@ -79,18 +79,22 @@ function setProperty(property: string, content: string) {
 }
 
 function setLink(rel: string, href: string, type?: string) {
-  let el = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+  const links = Array.from(
+    document.querySelectorAll<HTMLLinkElement>(`link[rel~="${rel}"]`),
+  );
   if (!href) {
-    el?.remove();
+    links.forEach((link) => link.remove());
     return;
   }
-  if (!el) {
-    el = document.createElement("link");
+  const el = links[0] || document.createElement("link");
+  if (!links[0]) {
     el.rel = rel;
     document.head.appendChild(el);
   }
   el.href = href;
   if (type) el.type = type;
+  else el.removeAttribute("type");
+  links.slice(1).forEach((link) => link.remove());
 }
 
 /**

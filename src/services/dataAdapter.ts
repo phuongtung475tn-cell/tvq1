@@ -21,6 +21,7 @@ const LEADS_KEY = "funnel_leads_v1";
 const ANALYTICS_KEY = "funnel_analytics_v1";
 const BACKUP_KEY = "funnel_backup_snapshots_v1";
 export const LEAD_CREATED_EVENT = "funnel:lead-created";
+export const COUNTDOWN_DECREMENT_EVENT = "funnel:countdown-decrement";
 export const ANALYTICS_UPDATED_EVENT = "funnel:analytics-updated";
 const CLOUD_CONFIG_TABLE = "funnel_configs";
 const CLOUD_ANALYTICS_TABLE = "funnel_analytics";

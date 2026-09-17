@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 
 import { useSiteConfig } from "@/lib/use-site-config";
-import { LEAD_CREATED_EVENT } from "@/services/dataAdapter";
+import { COUNTDOWN_DECREMENT_EVENT, saveConfig } from "@/services/dataAdapter";
+
+const handledLeadIds = new Set<string>();
 
 function endOfMonth() {
   const now = new Date();
@@ -22,7 +24,7 @@ function pad(n: number) {
 
 /** Đếm ngược + số suất còn lại, lấy trực tiếp từ cấu hình Admin. */
 export function ScarcityBar({ tone = "light" }: { tone?: "light" | "dark" }) {
-  const { config, update, save } = useSiteConfig();
+  const { config, update } = useSiteConfig();
   const c = config.countdown;
   const [left, setLeft] = useState<number | null>(null);
 
@@ -41,16 +43,24 @@ export function ScarcityBar({ tone = "light" }: { tone?: "light" | "dark" }) {
 
   useEffect(() => {
     if (!c.enabled || c.autoDecrement === false) return;
-    const onLeadCreated = () => {
-      if (c.slotsLeft <= 0) return;
-      update((d) => {
-        d.countdown.slotsLeft = Math.max(0, d.countdown.slotsLeft - 1);
+    const onLeadCreated = (event: Event) => {
+      const leadId = (event as CustomEvent<{ leadId?: string }>).detail?.leadId;
+      if (!leadId || handledLeadIds.has(leadId) || c.slotsLeft <= 0) return;
+      handledLeadIds.add(leadId);
+      const nextConfig = structuredClone(config);
+      nextConfig.countdown.slotsLeft = Math.max(
+        0,
+        nextConfig.countdown.slotsLeft - 1,
+      );
+      update((draft) => {
+        draft.countdown.slotsLeft = nextConfig.countdown.slotsLeft;
       });
-      save();
+      void saveConfig(nextConfig);
     };
-    window.addEventListener(LEAD_CREATED_EVENT, onLeadCreated);
-    return () => window.removeEventListener(LEAD_CREATED_EVENT, onLeadCreated);
-  }, [c.enabled, c.autoDecrement, c.slotsLeft, update, save]);
+    window.addEventListener(COUNTDOWN_DECREMENT_EVENT, onLeadCreated);
+    return () =>
+      window.removeEventListener(COUNTDOWN_DECREMENT_EVENT, onLeadCreated);
+  }, [c.enabled, c.autoDecrement, c.slotsLeft, config, update]);
 
   const d = left === null ? 0 : Math.floor(left / 86400000);
   const h = left === null ? 0 : Math.floor((left % 86400000) / 3600000);

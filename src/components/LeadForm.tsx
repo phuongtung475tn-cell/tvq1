@@ -19,6 +19,7 @@ import {
   isDuplicateLeadRemote,
   saveLead,
   trackConversion,
+  COUNTDOWN_DECREMENT_EVENT,
   type LeadRecord,
 } from "@/services/dataAdapter";
 import { sendLeadEmail } from "@/lib/email.functions";
@@ -397,6 +398,11 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
           `Webhook partial failure (${delivery.failedCount}/${delivery.results.length}): ${failed}`,
         );
       }
+      window.dispatchEvent(
+        new CustomEvent(COUNTDOWN_DECREMENT_EVENT, {
+          detail: { leadId: savedLead.id },
+        }),
+      );
 
       // Ghi nhận chuyển đổi cho Analytics Dashboard + A/B comparison.
       trackConversion(source, config.abTest.enabled ? variant : undefined);
