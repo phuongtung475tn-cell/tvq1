@@ -92,11 +92,12 @@ Sau khi thay đổi biến môi trường, cần redeploy để Vite đưa cấu
 Dùng để cấu hình, lead và analytics đồng bộ nhiều thiết bị. Database Mode không ghi dữ liệu nghiệp vụ vào localStorage.
 
 1. Tạo project tại [supabase.com](https://supabase.com).
-2. Trong SQL Editor, chạy lần lượt `supabase/funnel_configs.sql`, `supabase/leads.sql`, `supabase/visitor_tracking.sql`, rồi `supabase/admin_users.sql`. Hoặc chạy file tổng hợp `supabase-funnel-2026-09-17.sql` một lần.
+2. Trong SQL Editor, chạy lần lượt `supabase/funnel_configs.sql`, `supabase/leads.sql`, `supabase/visitor_tracking.sql`, rồi `supabase/admin_users.sql`. Với project đã chạy schema cũ, chạy thêm `supabase/admin_rls_patch.sql` để sửa policy analytics mà không xóa dữ liệu. Hoặc chạy file tổng hợp `supabase-funnel-2026-09-17.sql` một lần trên project mới.
 3. Vào **Authentication → Users → Add user**, tạo tài khoản email/mật khẩu quản trị. Nếu bật **Confirm email**, phải xác nhận email trước lần đăng nhập đầu tiên.
 4. Chạy lại đoạn `insert into public.admin_users ...` trong `supabase/admin_users.sql` sau khi user đã tồn tại, hoặc thay email trong câu SQL bằng email thực tế của admin. Kiểm tra user có một dòng `enabled = true` trong `public.admin_users`.
 5. Trong Vercel đặt `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` và `VITE_SUPABASE_ADMIN_EMAIL`. Chỉ dùng publishable/anon key ở frontend; tuyệt đối không dùng service role key.
 6. Redeploy rồi mở `/admin`. Đăng nhập bằng email Supabase Auth và mật khẩu của user, không dùng mật khẩu admin cũ trong mã nguồn.
+7. Nếu đăng nhập thành công nhưng lưu analytics báo 403, chạy `supabase/admin_rls_patch.sql`; nguyên nhân thường là project vẫn dùng policy cũ dựa trên `app_metadata.role`, trong khi ứng dụng cấp quyền qua `admin_users`.
 
 Kiểm tra nhanh trong Supabase sau khi đăng nhập:
 
